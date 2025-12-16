@@ -87,24 +87,23 @@ class FreeParticle:
             - ΔP = ℏ/(2σx)
             - ΔX·ΔP = ℏ/2 (état minimum incertitude)
         """
-        # Conversion robuste en ndarray
-        x = np.asarray(spatial_grid, dtype=float)
+        # CORRECTION CRITIQUE : Renommer variable locale pour éviter conflit
+        x_grid = np.asarray(spatial_grid, dtype=float)
         
         # Vérification type final
-        if not isinstance(x, np.ndarray):
+        if not isinstance(x_grid, np.ndarray):
             raise TypeError(
                 f"Conversion échouée : spatial_grid est {type(spatial_grid)}, "
-                f"x converti est {type(x)} au lieu de ndarray"
+                f"x_grid converti est {type(x_grid)} au lieu de ndarray"
             )
         
         # Vérification couverture grille
         x_min_needed = x0 - 5 * sigma_x
         x_max_needed = x0 + 5 * sigma_x
         
-        if x[0] > x_min_needed or x[-1] < x_max_needed:
-            # CORRECTION : Ne pas faire import ici
+        if x_grid[0] > x_min_needed or x_grid[-1] < x_max_needed:
             warnings.warn(
-                f"Grille [{x[0]:.2e}, {x[-1]:.2e}] ne couvre pas ±5σ "
+                f"Grille [{x_grid[0]:.2e}, {x_grid[-1]:.2e}] ne couvre pas ±5σ "
                 f"[{x_min_needed:.2e}, {x_max_needed:.2e}]. "
                 f"Normalisation et incertitudes seront imprécises.",
                 UserWarning
@@ -112,8 +111,8 @@ class FreeParticle:
         
         # Construction paquet gaussien
         normalization = (2 * np.pi * sigma_x**2)**(-0.25)
-        envelope = np.exp(-(x - x0)**2 / (4 * sigma_x**2))
-        phase = np.exp(1j * k0 * x)
+        envelope = np.exp(-(x_grid - x0)**2 / (4 * sigma_x**2))
+        phase = np.exp(1j * k0 * x_grid)
         
         psi = normalization * envelope * phase
         

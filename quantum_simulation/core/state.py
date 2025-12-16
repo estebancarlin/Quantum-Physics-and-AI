@@ -53,8 +53,16 @@ class WaveFunctionState(QuantumState):
     """
     
     def __init__(self, spatial_grid: np.ndarray, wavefunction: np.ndarray):
-        self.spatial_grid = spatial_grid
-        self.wavefunction = wavefunction
+        self.spatial_grid = np.asarray(spatial_grid, dtype=float)
+        self.wavefunction = np.asarray(wavefunction, dtype=complex)
+        
+        # Vérification cohérence tailles
+        if self.spatial_grid.shape != self.wavefunction.shape:
+            raise ValueError(
+                f"Taille grille ({self.spatial_grid.shape}) != "
+                f"taille wavefunction ({self.wavefunction.shape})"
+            )
+        
         self.dx = spatial_grid[1] - spatial_grid[0]  # Grille uniforme
         
     def norm(self) -> float:
