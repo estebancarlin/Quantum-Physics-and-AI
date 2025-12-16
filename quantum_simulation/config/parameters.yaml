@@ -1,0 +1,97 @@
+# ============================================================
+# CONSTANTES PHYSIQUES FONDAMENTALES
+# Sources : [file:1, Chapitre I, § A-1]
+# ============================================================
+physical_constants:
+  h: null              # Constante de Planck (J·s)
+                        # Ordre de grandeur : ~6.62e-34 [file:1, Chapitre I, équation A-2]
+  hbar: null           # ℏ = h/(2π) (J·s)
+  c: null              # Vitesse de la lumière (m/s) - si nécessaire
+  m_electron: null     # Masse électron (kg)
+  m_proton: null       # Masse proton (kg)
+  e_charge: null       # Charge élémentaire (C)
+  epsilon_0: null      # Permittivité du vide (F/m)
+
+# ============================================================
+# PARAMÈTRES NUMÉRIQUES GÉNÉRAUX
+# ============================================================
+numerical_parameters:
+  spatial_discretization:
+    dimension: 1                    # 1D, 2D ou 3D
+    grid_type: "uniform"            # Type de grille
+    nx: null                        # Nombre de points (direction x)
+    ny: null                        # Nombre de points (direction y)
+    nz: null                        # Nombre de points (direction z)
+    x_min: null
+    x_max: null
+    # Idem pour y, z si dimension > 1
+    
+  temporal_discretization:
+    dt: null                        # Pas de temps (s)
+    t_initial: 0.0
+    t_final: null
+    
+  tolerances:
+    normalization_check: 1.0e-10    # Pour vérifier ⟨ψ|ψ⟩ ≈ 1
+    hermiticity_check: 1.0e-10      # Pour vérifier A† = A
+    orthonormality_check: 1.0e-8    # Pour bases
+    heisenberg_inequality: 1.0e-10  # Tolérance validation ΔX·ΔP ≥ ℏ/2
+
+# ============================================================
+# PARAMÈTRES SPÉCIFIQUES AUX SYSTÈMES
+# ============================================================
+systems:
+  free_particle:
+    mass: null                      # Masse particule (kg)
+    
+  harmonic_oscillator:
+    mass: null                      # m (kg)
+    omega: null                     # Pulsation ω (rad/s)
+                                    # Source : [file:1, Chapitre V, § A]
+    n_max_fock: 50                  # Troncature base de Fock {|n⟩}
+    
+  potential_systems:
+    potential_type: "custom"        # "infinite_well", "harmonic", "custom"
+    potential_parameters:
+      # Paramètres dépendant du type
+      # Ex: largeur puits, profondeur, etc.
+      
+  hydrogen_atom:
+    # LIMITE : Détails insuffisants dans synthèse extraite pour paramétrage complet
+    # [file:1, Chapitre VII] : formules finales seulement (E0, a0)
+    # Méthode de résolution numérique non fournie
+    a_0: null                       # Rayon de Bohr (m)
+    E_0: null                       # Énergie fondamentale (J)
+
+# ============================================================
+# CONFIGURATION DES EXPÉRIENCES
+# ============================================================
+experiments:
+  wavepacket_evolution:
+    initial_state_type: "gaussian"  # Type paquet d'ondes initial
+    gaussian_parameters:
+      x0: null                      # Centre initial
+      sigma_x: null                 # Largeur spatiale
+      k0: null                      # Impulsion moyenne (nombre d'onde)
+      # LIMITE : Formule complète paquet gaussien au Complément GI
+      # mais détails absents de l'extrait synthèse fourni
+    evolution_times: []             # Liste de temps pour échantillonnage
+    
+  measurement_statistics:
+    observable_to_measure: "position"  # "position", "momentum", "energy"
+    n_measurements: 1000               # Nombre de mesures pour statistiques
+    initial_state_type: "custom"
+    
+  heisenberg_validation:
+    observables: ["position", "momentum"]
+    test_states: []                    # Liste d'états à tester
+
+# ============================================================
+# PARAMÈTRES DE VISUALISATION (facultatif)
+# ============================================================
+visualization:
+  plot_wavefunction: true
+  plot_probability_density: true
+  plot_current_density: false
+  save_figures: true
+  output_directory: "./results/"
