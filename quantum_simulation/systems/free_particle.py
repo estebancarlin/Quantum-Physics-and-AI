@@ -6,6 +6,7 @@ Source : [file:1, Chapitre I, § C]
 """
 
 import numpy as np
+import warnings  # ← DÉPLACER ICI
 from typing import Tuple
 from quantum_simulation.core.state import WaveFunctionState
 from quantum_simulation.core.operators import Hamiltonian
@@ -13,56 +14,56 @@ from quantum_simulation.core.operators import Hamiltonian
 
 class FreeParticle:
     """
-    Particule quantique libre (pas de potentiel).
+    Particule libre dans potentiel nul.
     
-    États propres : ondes planes exp(ik·r)
-    Spectre énergie : E(k) = ℏ²k²/2m (continu)
+    Hamiltonien : H = P²/(2m) = -ℏ²/(2m) ∇²
+    
+    États propres : ondes planes exp(ikx) avec E = ℏ²k²/(2m)
     """
     
     def __init__(self, mass: float, hbar: float):
         """
         Args:
             mass: Masse particule (kg)
-            hbar: Constante de Planck réduite (J·s)
+            hbar: Constante réduite de Planck (J·s)
         """
         self.mass = mass
         self.hbar = hbar
-        
-        # Potentiel nul
-        self.potential = lambda x: np.zeros_like(x)
-        
-        # Hamiltonien
-        self.hamiltonian = Hamiltonian(
-            mass=mass,
-            potential=self.potential,
-            hbar=hbar
-        )
-        
-    def create_plane_wave(self, spatial_grid: np.ndarray, k: float) -> WaveFunctionState:
+    
+    def hamiltonian(self, spatial_grid: np.ndarray) -> Hamiltonian:
         """
-        Crée onde plane exp(ikx) (état propre énergie).
+        Construit hamiltonien particule libre sur grille.
+        
+        H = -ℏ²/(2m) d²/dx²
         
         Args:
             spatial_grid: Grille spatiale
-            k: Nombre d'onde (m⁻¹)
             
         Returns:
-            État propre normalisé de H avec énergie E = ℏ²k²/2m
-            
-        Note: 
-            Sur grille finie, normalisation discrète appliquée.
-            Utilise normalisation explicite pour garantir ⟨ψ|ψ⟩ = 1.
+            Opérateur hamiltonien
         """
-        psi = np.exp(1j * k * spatial_grid)
+        n = len(spatial_grid)
+        dx = spatial_grid[1] - spatial_grid[0]
         
-        # Création état intermédiaire
-        state_unnorm = WaveFunctionState(spatial_grid, psi)
+        # Matrice laplacien tridiagonale
+        diag = -2.0 * np.ones(n)
+        off_diag = np.ones(n-1)
         
-        # Normalisation robuste via méthode de WaveFunctionState
-        state = state_unnorm.normalize()
+        laplacian = (
+            np.diag(diag) + 
+            np.diag(off_diag, k=1) + 
+            np.diag(off_diag, k=-1)
+        ) / dx**2
         
-        return state
+        # H = -ℏ²/(2m) Δ
+        hamiltonian_matrix = -(self.hbar**2 / (2 * self.mass)) * laplacian
         
+        return Hamiltonian(
+            dimension=1,
+            matrix=hamiltonian_matrix,
+            basis_type='position'
+        )
+    
     def create_gaussian_wavepacket(self, spatial_grid: np.ndarray,
                                     x0: float, sigma_x: float, k0: float) -> WaveFunctionState:
         """
@@ -71,7 +72,7 @@ class FreeParticle:
         ψ(x) = (2πσₓ²)^(-1/4) exp[-(x-x₀)²/(4σₓ²) + ik₀x]
         
         Args:
-            spatial_grid: Grille spatiale
+            spatial_grid: Grille spatiale (ndarray)
             x0: Position centrale (m)
             sigma_x: Largeur gaussienne (m)
             k0: Impulsion moyenne ℏk₀ (m⁻¹)
@@ -86,14 +87,22 @@ class FreeParticle:
             - ΔP = ℏ/(2σx)
             - ΔX·ΔP = ℏ/2 (état minimum incertitude)
         """
-        x = spatial_grid
+        # Conversion robuste en ndarray
+        x = np.asarray(spatial_grid, dtype=float)
         
-        # Vérification couverture
+        # Vérification type final
+        if not isinstance(x, np.ndarray):
+            raise TypeError(
+                f"Conversion échouée : spatial_grid est {type(spatial_grid)}, "
+                f"x converti est {type(x)} au lieu de ndarray"
+            )
+        
+        # Vérification couverture grille
         x_min_needed = x0 - 5 * sigma_x
         x_max_needed = x0 + 5 * sigma_x
         
         if x[0] > x_min_needed or x[-1] < x_max_needed:
-            import warnings
+            # CORRECTION : Ne pas faire import ici
             warnings.warn(
                 f"Grille [{x[0]:.2e}, {x[-1]:.2e}] ne couvre pas ±5σ "
                 f"[{x_min_needed:.2e}, {x_max_needed:.2e}]. "
@@ -101,11 +110,9 @@ class FreeParticle:
                 UserWarning
             )
         
-        # Enveloppe gaussienne
+        # Construction paquet gaussien
         normalization = (2 * np.pi * sigma_x**2)**(-0.25)
         envelope = np.exp(-(x - x0)**2 / (4 * sigma_x**2))
-        
-        # Modulation onde plane
         phase = np.exp(1j * k0 * x)
         
         psi = normalization * envelope * phase
@@ -116,47 +123,63 @@ class FreeParticle:
             state = state.normalize()
             
         return state
-        
-    def energy_eigenvalue(self, k: float) -> float:
+    
+    def expected_position(self, t: float, x0: float, k0: float) -> float:
         """
-        Calcule énergie onde plane de nombre d'onde k.
+        Position moyenne paquet gaussien libre au temps t.
         
-        E(k) = ℏ²k²/2m
+        Pour particule libre : ⟨X⟩(t) = x₀ + (ℏk₀/m)t
         
+        Args:
+            t: Temps (s)
+            x0: Position initiale (m)
+            k0: Nombre d'onde initial (m⁻¹)
+            
         Returns:
-            Énergie (J)
+            Position moyenne ⟨X⟩(t) (m)
         """
-        return (self.hbar**2 * k**2) / (2 * self.mass)
-        
-    def momentum_from_k(self, k: float) -> float:
+        return x0 + (self.hbar * k0 / self.mass) * t
+    
+    def expected_momentum(self, k0: float) -> float:
         """
-        Impulsion associée au nombre d'onde k.
+        Impulsion moyenne paquet gaussien libre.
         
-        p = ℏk (Règle R1.2)
+        Pour particule libre : ⟨P⟩ = ℏk₀ (conservée)
         
+        Args:
+            k0: Nombre d'onde initial (m⁻¹)
+            
         Returns:
-            Impulsion (kg·m/s)
+            Impulsion moyenne ⟨P⟩ (kg·m/s)
         """
-        return self.hbar * k
-        
-    def k_from_momentum(self, p: float) -> float:
+        return self.hbar * k0
+    
+    def position_uncertainty(self, t: float, sigma_x: float) -> float:
         """
-        Nombre d'onde associé à l'impulsion p.
+        Incertitude position paquet gaussien libre au temps t.
         
-        k = p/ℏ
+        Pour particule libre : ΔX(t) = σₓ√[1 + (ℏt/(2mσₓ²))²]
         
+        Args:
+            t: Temps (s)
+            sigma_x: Largeur initiale (m)
+            
         Returns:
-            Nombre d'onde (m⁻¹)
+            Incertitude ΔX(t) (m)
         """
-        return p / self.hbar
-        
-    def group_velocity(self, k: float) -> float:
+        spreading_factor = 1 + (self.hbar * t / (2 * self.mass * sigma_x**2))**2
+        return sigma_x * np.sqrt(spreading_factor)
+    
+    def momentum_uncertainty(self, sigma_x: float) -> float:
         """
-        Vitesse de groupe vg = dE/dℏk = ℏk/m.
+        Incertitude impulsion paquet gaussien libre.
         
-        Pour particule libre, correspond à vitesse classique p/m.
+        Pour particule libre : ΔP = ℏ/(2σₓ) (conservée)
         
+        Args:
+            sigma_x: Largeur spatiale (m)
+            
         Returns:
-            Vitesse (m/s)
+            Incertitude ΔP (kg·m/s)
         """
-        return (self.hbar * k) / self.mass
+        return self.hbar / (2 * sigma_x)

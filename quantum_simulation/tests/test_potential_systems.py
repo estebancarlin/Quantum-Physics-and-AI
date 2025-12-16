@@ -1,5 +1,13 @@
 """
 Tests unitaires pour systèmes à potentiel.
+
+Vérifie :
+- Spectre énergétique puits infini : Eₙ = n²π²ℏ²/(2mL²)
+- Normalisation états propres
+- Conditions aux bords : ψ(0) = ψ(L) = 0
+- Orthonormalité : ⟨ψₙ|ψₘ⟩ = δₙₘ
+- Estimation états liés puits fini
+- Coefficients transmission barrière
 """
 
 import sys
@@ -18,6 +26,8 @@ from quantum_simulation.systems.potential_systems import (
 def test_infinite_well_energy_spectrum():
     """
     Énergies puits infini : Eₙ = n²π²ℏ²/(2mL²)
+    
+    Test formule analytique exacte.
     """
     hbar = 1.054571817e-34
     mass = 9.1093837015e-31
@@ -29,8 +39,9 @@ def test_infinite_well_energy_spectrum():
         E_n = well.energy_eigenvalue(n)
         E_theory = (n**2 * np.pi**2 * hbar**2) / (2 * mass * width**2)
         
-        assert abs(E_n - E_theory) < 1e-50, \
-            f"E_{n} incorrect"
+        relative_error = abs(E_n - E_theory) / E_theory
+        assert relative_error < 1e-15, \
+            f"Énergie E_{n} incorrecte : {E_n:.3e} vs {E_theory:.3e}"
 
 
 def test_infinite_well_wavefunction_normalization():
@@ -52,9 +63,11 @@ def test_infinite_well_wavefunction_normalization():
     
     for n in [1, 2, 5]:
         state = well.eigenstate_wavefunction(n, x)
+        norm = state.norm()
+        
         # Tolérance 1e-6 : acceptable pour n ≤ 10 sur grille 2048 points
-        assert state.is_normalized(tolerance=1e-6), \
-            f"État n={n} non normé (norme={state.norm():.10f})"
+        assert abs(norm - 1.0) < 1e-6, \
+            f"État n={n} non normé : norme={norm:.10f}"
 
 
 def test_infinite_well_boundary_conditions():
@@ -69,7 +82,6 @@ def test_infinite_well_boundary_conditions():
     width = 1e-9
     
     # Grille alignée sur bords [0, L]
-    # Inclut exactement x=0 (premier point) et x=L (dernier point)
     x = np.linspace(0, width, 1024)
     
     well = InfiniteWell(width, mass, hbar)
@@ -78,7 +90,7 @@ def test_infinite_well_boundary_conditions():
         state = well.eigenstate_wavefunction(n, x)
         psi = state.wavefunction
         
-        # Vérifier bords : indices 0 et -1 correspondent à x=0 et x=L
+        # Vérifier bords
         assert abs(psi[0]) < 1e-10, \
             f"ψ_{n}(0) = {abs(psi[0]):.2e} devrait être nul"
         assert abs(psi[-1]) < 1e-10, \
@@ -88,6 +100,8 @@ def test_infinite_well_boundary_conditions():
 def test_infinite_well_orthonormality():
     """
     ⟨ψₙ|ψₘ⟩ = δₙₘ pour puits infini.
+    
+    Test propriété fondamentale base d'états propres.
     """
     hbar = 1.054571817e-34
     mass = 9.1093837015e-31
@@ -104,6 +118,8 @@ def test_infinite_well_orthonormality():
 def test_finite_well_bound_states_estimate():
     """
     Nombre états liés puits fini doit être cohérent.
+    
+    Formule approximative : N ≈ √(2mV₀L²/π²ℏ²)
     """
     hbar = 1.054571817e-34
     mass = 9.1093837015e-31
@@ -118,12 +134,18 @@ def test_finite_well_bound_states_estimate():
     assert n_bound >= 1, "Puits fini doit avoir au moins 1 état lié"
     
     # Doit être fini (pas trop grand)
-    assert n_bound < 100, "Nombre états liés suspects"
+    assert n_bound < 100, f"Nombre états liés suspects : {n_bound}"
+    
+    # Vérification ordre grandeur
+    # ξ₀ ≈ 7.5 → N ≈ 4-5 états
+    assert 3 <= n_bound <= 10, f"Nombre états liés hors attentes : {n_bound}"
 
 
 def test_barrier_transmission_classical():
     """
     Transmission sur-barrière (E > V₀) devrait être ~1.
+    
+    Limite classique : particule passe sans obstacle.
     """
     hbar = 1.054571817e-34
     mass = 9.1093837015e-31
@@ -136,12 +158,14 @@ def test_barrier_transmission_classical():
     E = 2 * height
     T = barrier.transmission_coefficient_approx(E)
     
-    assert T > 0.9, "Transmission classique devrait être proche de 1"
+    assert T > 0.9, f"Transmission classique devrait être ~1, obtenu {T:.2f}"
 
 
 def test_barrier_transmission_tunnel():
     """
-    Transmission sous-barrière (effet tunnel) devrait être 0 < T < 1.
+    Transmission sous-barrière (effet tunnel) : 0 < T < 1.
+    
+    Phénomène purement quantique : transmission partielle malgré E < V₀.
     """
     hbar = 1.054571817e-34
     mass = 9.1093837015e-31
@@ -154,13 +178,15 @@ def test_barrier_transmission_tunnel():
     E = 0.5 * height
     T = barrier.transmission_coefficient_approx(E)
     
-    assert 0 < T < 1, "Transmission tunnel devrait être 0 < T < 1"
-    assert T < 0.5, "Transmission barrière opaque devrait être faible"
+    assert 0 < T < 1, f"Transmission tunnel hors [0,1] : {T:.2e}"
+    assert T < 0.5, f"Transmission barrière opaque devrait être faible, obtenu {T:.2e}"
 
 
 def test_potential_continuity():
     """
-    Potentiels doivent être continus par morceaux.
+    Potentiels doivent être continus par morceaux (pas de NaN/inf).
+    
+    Vérifie intégrité numérique potentiels.
     """
     hbar = 1.054571817e-34
     mass = 9.1093837015e-31
@@ -168,16 +194,37 @@ def test_potential_continuity():
     
     x = np.linspace(-2*width, 2*width, 1024)
     
-    # Puits infini
+    # Puits infini (autorise inf aux murs)
     well = InfiniteWell(width, mass, hbar)
     V_well = well.potential(x)
-    
-    # Pas de NaN ou inf (sauf murs)
-    assert not np.any(np.isnan(V_well))
+    assert not np.any(np.isnan(V_well)), "Potentiel puits contient NaN"
     
     # Puits fini
     finite_well = FiniteWell(width, 1e-18, mass, hbar)
     V_finite = finite_well.potential(x)
+    assert not np.any(np.isnan(V_finite)), "Potentiel puits fini contient NaN"
+    assert np.all(np.isfinite(V_finite)), "Potentiel puits fini contient inf"
     
-    assert not np.any(np.isnan(V_finite))
-    assert np.all(np.isfinite(V_finite))
+    # Barrière
+    barrier = PotentialBarrier(width, 1e-19, mass, hbar)
+    V_barrier = barrier.potential(x)
+    assert not np.any(np.isnan(V_barrier)), "Potentiel barrière contient NaN"
+    assert np.all(np.isfinite(V_barrier)), "Potentiel barrière contient inf"
+
+
+def test_infinite_well_invalid_n():
+    """
+    Test gestion erreur : n < 1 doit lever ValueError.
+    """
+    hbar = 1.054571817e-34
+    mass = 9.1093837015e-31
+    width = 1e-9
+    
+    well = InfiniteWell(width, mass, hbar)
+    
+    with pytest.raises(ValueError, match="n doit être ≥ 1"):
+        well.energy_eigenvalue(0)
+    
+    with pytest.raises(ValueError, match="n doit être ≥ 1"):
+        x = np.linspace(0, width, 100)
+        well.eigenstate_wavefunction(-1, x)

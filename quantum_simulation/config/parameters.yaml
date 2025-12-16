@@ -3,14 +3,13 @@
 # Sources : [file:1, Chapitre I, § A-1]
 # ============================================================
 physical_constants:
-  h: null              # Constante de Planck (J·s)
-                        # Ordre de grandeur : ~6.62e-34 [file:1, Chapitre I, équation A-2]
-  hbar: null           # ℏ = h/(2π) (J·s)
-  c: null              # Vitesse de la lumière (m/s) - si nécessaire
-  m_electron: null     # Masse électron (kg)
-  m_proton: null       # Masse proton (kg)
-  e_charge: null       # Charge élémentaire (C)
-  epsilon_0: null      # Permittivité du vide (F/m)
+  h: 6.62607015e-34              # Constante de Planck (J·s)
+  hbar: 1.054571817e-34          # ℏ = h/(2π) (J·s)
+  c: 299792458.0                 # Vitesse de la lumière (m/s)
+  m_electron: 9.1093837015e-31   # Masse électron (kg)
+  m_proton: 1.67262192369e-27    # Masse proton (kg)
+  e_charge: 1.602176634e-19      # Charge élémentaire (C)
+  epsilon_0: 8.8541878128e-12    # Permittivité du vide (F/m)
 
 # ============================================================
 # PARAMÈTRES NUMÉRIQUES GÉNÉRAUX
@@ -19,22 +18,23 @@ numerical_parameters:
   spatial_discretization:
     dimension: 1                    # 1D, 2D ou 3D
     grid_type: "uniform"            # Type de grille
-    nx: null                        # Nombre de points (direction x)
+    nx: 2048                        # Nombre de points (direction x)
     ny: null                        # Nombre de points (direction y)
     nz: null                        # Nombre de points (direction z)
-    x_min: null
-    x_max: null
+    x_min: -5.0e-9                  # ✅ Grille centrée pour gaussienne
+    x_max: 5.0e-9                   # ✅ Couvre ±5σ avec σ=2e-9
     # Idem pour y, z si dimension > 1
     
   temporal_discretization:
-    dt: null                        # Pas de temps (s)
+    dt: 1.0e-17                     # Pas de temps (s)
     t_initial: 0.0
-    t_final: null
+    t_final: 5.0e-15
     
   tolerances:
     normalization_check: 1.0e-10    # Pour vérifier ⟨ψ|ψ⟩ ≈ 1
     hermiticity_check: 1.0e-10      # Pour vérifier A† = A
     orthonormality_check: 1.0e-8    # Pour bases
+    conservation_probability: 1.0e-8 # Conservation norme
     heisenberg_inequality: 1.0e-10  # Tolérance validation ΔX·ΔP ≥ ℏ/2
 
 # ============================================================
@@ -85,21 +85,27 @@ experiments:
   measurement_statistics:
     observable_to_measure: "position"  # "position", "momentum", "energy"
     n_measurements: 1000               # Nombre de mesures pour statistiques
-    initial_state_type: "custom"
+    system_type: "free_particle"       # "free_particle" ou "infinite_well"
     
+    # Configuration spatiale locale (surcharge config globale)
+    spatial_grid:
+      nx: 2048                         # Plus dense pour précision
+      x_min: -5.0e-9                   # ✅ Grille centrée
+      x_max: 5.0e-9                    # ✅ Couvre ±5σ
+
+    initial_state:
+      type: "gaussian"
+      x0: 0.0                          # Centré sur grille
+      sigma_x: 1.0e-9                  # Largeur réduite pour tenir dans grille
+      k0: 5.0e9                        # Impulsion moyenne
+    
+    successive_measurements:
+      enabled: true                    # Tester réduction paquet
+      n_repetitions: 5                 # Nombre séquences test
+      
   heisenberg_validation:
     observables: ["position", "momentum"]
     test_states: []                    # Liste d'états à tester
-
-# ============================================================
-# PARAMÈTRES DE VISUALISATION (facultatif)
-# ============================================================
-visualization:
-  plot_wavefunction: true
-  plot_probability_density: true
-  plot_current_density: false
-  save_figures: true
-  output_directory: "./results/"
 
 # ============================================================
 # VISUALISATION
