@@ -1,0 +1,75 @@
+# ==============================================================================
+# Quantum Simulation Framework - Dependencies
+# ==============================================================================
+# Python 3.10+ required
+#
+# Core scientific computing
+numpy>=1.24.0,<2.0.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+
+# Configuration management
+pyyaml>=6.0
+
+# Testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Optional: Enhanced visualization
+seaborn>=0.12.0
+
+# Optional: Progress bars for long simulations
+tqdm>=4.65.0
+
+# # Optional: Jupyter notebook support (for interactive tutorials)
+# jupyter>=1.0.0
+# ipykernel>=6.25.0
+# ipywidgets>=8.1.0
+
+# # Optional: Documentation generation
+# sphinx>=7.0.0
+# sphinx-rtd-theme>=1.3.0
+# nbsphinx>=0.9.0
+
+# # Optional: Code quality tools
+# black>=23.7.0
+# flake8>=6.1.0
+# mypy>=1.5.0
+
+# ==============================================================================
+# Package versions explanations:
+# ------------------------------------------------------------------------------
+# numpy: Core array operations, FFT, linear algebra
+#   - Used in: all modules (state.py, operators.py, etc.)
+#   - Critical for: wavefunction representations, numerical integration
+#
+# scipy: Advanced scientific functions
+#   - Used in: validation/conservation_laws.py (chi-squared tests)
+#   - Used in: dynamics/evolution.py (ODE solvers, special functions)
+#
+# matplotlib: Plotting and visualization
+#   - Used in: utils/visualization.py
+#   - Used in: examples/*.py (result visualization)
+#
+# pyyaml: YAML configuration file parsing
+#   - Used in: All experiments to load config/parameters.yaml
+#
+# pytest: Testing framework
+#   - Used in: tests/ directory (40+ unit tests)
+#   - Features: parametrization, fixtures, coverage reports
+#
+# seaborn: Statistical data visualization (optional)
+#   - Used in: Enhanced plots for measurement statistics
+#
+# tqdm: Progress bars (optional)
+#   - Used in: Time evolution loops for long simulations
+#
+# jupyter: Interactive notebooks (optional)
+#   - For: Educational tutorials and exploratory analysis
+#
+# sphinx: Documentation generation (optional)
+#   - For: Generating HTML API documentation from docstrings
+#
+# black/flake8/mypy: Code quality (optional)
+#   - For: Development and contribution guidelines
+# ==============================================================================

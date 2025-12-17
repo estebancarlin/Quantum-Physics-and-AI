@@ -87,23 +87,32 @@ class FreeParticle:
             - ΔP = ℏ/(2σx)
             - ΔX·ΔP = ℏ/2 (état minimum incertitude)
         """
-        # CORRECTION CRITIQUE : Renommer variable locale pour éviter conflit
-        x_grid = np.asarray(spatial_grid, dtype=float)
+        # # DEBUG CRITIQUE
+        # print(f"      DEBUG create_gaussian ENTRÉE: type(spatial_grid) = {type(spatial_grid)}")
+        # print(f"      DEBUG create_gaussian ENTRÉE: spatial_grid.dtype = {spatial_grid.dtype if isinstance(spatial_grid, np.ndarray) else 'N/A'}")
+        
+        # Conversion robuste en ndarray
+        x = np.asarray(spatial_grid, dtype=np.float64)
+        
+        # # DEBUG après conversion
+        # print(f"      DEBUG create_gaussian APRÈS asarray: type(x) = {type(x)}")
+        # print(f"      DEBUG create_gaussian APRÈS asarray: x.dtype = {x.dtype}")
+        # print(f"      DEBUG create_gaussian APRÈS asarray: x[:3] = {x[:3]}")
         
         # Vérification type final
-        if not isinstance(x_grid, np.ndarray):
+        if not isinstance(x, np.ndarray):
             raise TypeError(
                 f"Conversion échouée : spatial_grid est {type(spatial_grid)}, "
-                f"x_grid converti est {type(x_grid)} au lieu de ndarray"
+                f"x converti est {type(x)} au lieu de ndarray"
             )
         
         # Vérification couverture grille
         x_min_needed = x0 - 5 * sigma_x
         x_max_needed = x0 + 5 * sigma_x
         
-        if x_grid[0] > x_min_needed or x_grid[-1] < x_max_needed:
+        if x[0] > x_min_needed or x[-1] < x_max_needed:
             warnings.warn(
-                f"Grille [{x_grid[0]:.2e}, {x_grid[-1]:.2e}] ne couvre pas ±5σ "
+                f"Grille [{x[0]:.2e}, {x[-1]:.2e}] ne couvre pas ±5σ "
                 f"[{x_min_needed:.2e}, {x_max_needed:.2e}]. "
                 f"Normalisation et incertitudes seront imprécises.",
                 UserWarning
@@ -111,8 +120,11 @@ class FreeParticle:
         
         # Construction paquet gaussien
         normalization = (2 * np.pi * sigma_x**2)**(-0.25)
-        envelope = np.exp(-(x_grid - x0)**2 / (4 * sigma_x**2))
-        phase = np.exp(1j * k0 * x_grid)
+        envelope = np.exp(-(x - x0)**2 / (4 * sigma_x**2))
+        
+        # # DEBUG avant phase
+        # print(f"      DEBUG create_gaussian: Calcul phase avec k0={k0}, type(x)={type(x)}")
+        phase = np.exp(1j * np.float64(k0) * x, dtype=np.complex128)
         
         psi = normalization * envelope * phase
         
@@ -121,6 +133,43 @@ class FreeParticle:
         if not state.is_normalized(tolerance=1e-6):
             state = state.normalize()
             
+        return state
+    
+    def create_plane_wave(self, spatial_grid: np.ndarray, k: float) -> WaveFunctionState:
+        """
+        Crée onde plane exp(ikx).
+        
+        ψ(x) = A exp(ikx)  où A choisi pour normaliser sur grille finie
+        
+        Args:
+            spatial_grid: Grille spatiale (ndarray)
+            k: Nombre d'onde (m⁻¹)
+            
+        Returns:
+            État onde plane normalisé numériquement
+            
+        Propriétés:
+            - État propre H avec E = ℏ²k²/(2m)
+            - ⟨P⟩ = ℏk (impulsion définie)
+            - ΔX → ∞ (position indéfinie sur grille infinie)
+            
+        Note:
+            Sur grille finie, onde plane tronquée n'est pas strictement
+            état propre (effets de bord). Normalisation discrète nécessaire.
+        """
+        # Conversion robuste en ndarray
+        x = np.asarray(spatial_grid, dtype=np.float64)
+        
+        # Onde plane complexe
+        psi = np.exp(1j * k * x)
+        
+        # Normalisation sur grille discrète
+        state = WaveFunctionState(spatial_grid, psi)
+        
+        # Forcer normalisation (onde plane sur grille finie non normée analytiquement)
+        if not state.is_normalized(tolerance=1e-6):
+            state = state.normalize()
+        
         return state
     
     def expected_position(self, t: float, x0: float, k0: float) -> float:

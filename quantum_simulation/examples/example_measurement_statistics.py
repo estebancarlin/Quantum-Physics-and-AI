@@ -30,7 +30,7 @@ def load_config():
     return config
 
 
-def plot_distributions(results, save_dir="./results/"):
+def plot_distributions(results, save_dir="./quantum_simulation/results/"):
     """
     Affiche histogramme empirique vs distribution théorique.
     """
@@ -59,7 +59,7 @@ def plot_distributions(results, save_dir="./results/"):
     ax.grid(True, alpha=0.3)
     
     Path(save_dir).mkdir(parents=True, exist_ok=True)
-    plt.savefig(f"{save_dir}/measurement_distributions.png", dpi=150, bbox_inches='tight')
+    plt.savefig(f"{save_dir}/measurement_distributions_{results['system_type']}.png", dpi=150, bbox_inches='tight')
     plt.show()
 
 
@@ -87,6 +87,10 @@ def main():
         status = "✓ PASS" if passed else "✗ FAIL"
         print(f"  {test_name:30s} : {status}")
     print("-" * 50)
+    
+    # Add system_type from config to results
+    results['system_type'] = config['experiments']['measurement_statistics']['system_type']
+    print(f" Système : {results['system_type']}")
     
     # Analyse détaillée
     analysis = results['analysis']

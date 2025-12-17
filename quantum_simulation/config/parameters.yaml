@@ -84,8 +84,12 @@ experiments:
     
   measurement_statistics:
     observable_to_measure: "position"  # "position", "momentum", "energy"
-    n_measurements: 1000               # Nombre de mesures pour statistiques
     system_type: "free_particle"       # "free_particle" ou "infinite_well"
+
+    n_measurements: 1000               # Nombre de mesures pour statistiques
+
+    # observable_to_measure: "energy"      # Au lieu de "position"
+    # system_type: "infinite_well"         # Au lieu de "free_particle"
     
     # Configuration spatiale locale (surcharge config globale)
     spatial_grid:
@@ -93,11 +97,20 @@ experiments:
       x_min: -5.0e-9                   # ✅ Grille centrée
       x_max: 5.0e-9                    # ✅ Couvre ±5σ
 
+      nx: 512
+      x_min: 0.0
+      x_max: 1.0e-9
+
     initial_state:
+
       type: "gaussian"
       x0: 0.0                          # Centré sur grille
       sigma_x: 1.0e-9                  # Largeur réduite pour tenir dans grille
       k0: 5.0e9                        # Impulsion moyenne
+      
+      # type: "superposition"
+      # n_levels: 3
+      # coefficients: [0.6, 0.8j, 0.0]  # |c₁|² + |c₂|² = 1
     
     successive_measurements:
       enabled: true                    # Tester réduction paquet
@@ -116,5 +129,5 @@ visualization:
   plot_current_density: false
   create_animation: false        # true pour créer GIF (plus lent)
   save_figures: true
-  output_directory: "./results/"
+  output_directory: "./quantum_simulation/results/"
   dpi: 150

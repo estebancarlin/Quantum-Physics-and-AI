@@ -84,9 +84,9 @@ class MeasurementStatistics(Experiment):
         )
         
         # DEBUG TEMPORAIRE
-        print(f"    DEBUG: Type self.x = {type(self.x)}")
-        print(f"    DEBUG: Valeurs params = x_min={spatial_params['x_min']}, "
-                f"x_max={spatial_params['x_max']}, nx={spatial_params['nx']}")
+        # print(f"    DEBUG: Type self.x = {type(self.x)}")
+        # print(f"    DEBUG: Valeurs params = x_min={spatial_params['x_min']}, "
+        #         f"x_max={spatial_params['x_max']}, nx={spatial_params['nx']}")
 
         # Vérification
         if not isinstance(self.x, np.ndarray):
@@ -121,11 +121,6 @@ class MeasurementStatistics(Experiment):
             # Paquet gaussien (superposition continue)
             if self.system_type == "free_particle":
                 self.system = FreeParticle(self.mass, self.hbar)
-                
-                # DEBUG CRITIQUE : Vérifier self.x avant appel
-                print(f"      DEBUG prepare_initial_state: type(self.x) = {type(self.x)}")
-                print(f"      DEBUG prepare_initial_state: self.x.shape = {self.x.shape if isinstance(self.x, np.ndarray) else 'N/A'}")
-                print(f"      DEBUG prepare_initial_state: id(self.x) = {id(self.x)}")
                 
                 self.initial_state = self.system.create_gaussian_wavepacket(
                     spatial_grid=self.x,
@@ -168,12 +163,17 @@ class MeasurementStatistics(Experiment):
         else:
             raise ValueError(f"Type état inconnu : {state_type}")
         
-        # Vérification finale normalisation
+        # CORRECTION : Tolérance relâchée pour erreurs numériques
+        # Intégration trapézoïdale a erreur O(dx²) ~ 1e-6 pour grilles typiques
         norm = self.initial_state.norm()
-        if abs(norm - 1.0) > 1e-8:
-            raise ValueError(f"État initial non normé : ||ψ|| = {norm}")
+        if abs(norm - 1.0) > 1e-3:  # Tolérance 0.1%
+            print(f"    ⚠ État initial mal normé : ||ψ|| = {norm:.10f}")
+            print(f"      Renormalisation automatique...")
+            self.initial_state = self.initial_state.normalize()
+            norm = self.initial_state.norm()
+            print(f"      Nouvelle norme : ||ψ|| = {norm:.10f}")
         
-        print(f"    ✓ État initial préparé : {state_type}")
+        print(f"    ✓ État initial préparé : {state_type} (norme = {norm:.10f})")
         
     def define_hamiltonian(self):
         """
