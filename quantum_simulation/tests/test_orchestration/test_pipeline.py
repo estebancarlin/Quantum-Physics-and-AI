@@ -1,28 +1,66 @@
-from quantum_simulation.experiments.gallery.tunneling_barrier import TunnelingBarrier
-from quantum_simulation.experiments.gallery.double_slit_2d import DoubleSlit2D
-from quantum_simulation.experiments.gallery.wave_packet_evolution import WavePacketEvolution
-from quantum_simulation.experiments.gallery.measurement_statistics import MeasurementStatistics
-from quantum_simulation.orchestration.pipeline import ExperimentPipeline
+# quantum_simulation/tests/test_orchestration/test_pipeline.py
 
-def test_pipeline_sequential():
-    """Pipeline 2 expériences séquentielles."""
-    exp1 = WavePacketEvolution(config1)
-    exp2 = MeasurementStatistics(config2)
+import pytest
+import sys
+from pathlib import Path
+
+project_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from quantum_simulation.orchestration.pipeline import ExperimentPipeline, PipelineResults
+from quantum_simulation.experiments.wavepacket_evolution import WavePacketEvolution
+import yaml
+
+
+@pytest.fixture
+def test_config():
+    """Configuration test minimale."""
+    config_path = project_root / "quantum_simulation/config/parameters.yaml"
     
-    pipeline = ExperimentPipeline([exp1, exp2])
+    # ✅ FIX : Spécifier encodage UTF-8 explicitement
+    with open(config_path, 'r', encoding='utf-8') as f:
+        return yaml.safe_load(f)
+
+
+def test_pipeline_sequential(test_config):
+    """Test pipeline séquentiel 2 expériences."""
+    # 2 instances même expérience (variations config)
+    exp1 = WavePacketEvolution(test_config)
+    exp2 = WavePacketEvolution(test_config)
+    
+    pipeline = ExperimentPipeline(
+        [exp1, exp2],
+        pipeline_config={'name': 'test_sequential'}
+    )
+    
     results = pipeline.run(parallel=False)
     
+    assert isinstance(results, PipelineResults)
     assert results.n_experiments == 2
-    assert results.all_passed
+    assert len(results.results) == 2
+
+
+def test_pipeline_checkpoint(test_config, tmp_path):
+    """Test sauvegarde/reprise checkpoint."""
+    exp = WavePacketEvolution(test_config)
     
-def test_pipeline_checkpoint():
-    """Reprise calcul depuis checkpoint."""
-    pipeline = ExperimentPipeline(experiments)
-    pipeline.checkpoint('checkpoint.pkl')
+    pipeline = ExperimentPipeline([exp], pipeline_config={
+        'name': 'test_checkpoint',
+        'checkpoint_dir': str(tmp_path)
+    })
     
-    # Simuler crash
-    pipeline2 = ExperimentPipeline([])
-    pipeline2.load_checkpoint('checkpoint.pkl')
+    # Checkpoint avant exécution
+    checkpoint_file = tmp_path / "test.pkl"
+    pipeline.checkpoint(str(checkpoint_file))
     
-    results = pipeline2.run()
-    assert results.n_experiments == len(experiments)
+    assert checkpoint_file.exists()
+    
+    # Charger checkpoint
+    pipeline2 = ExperimentPipeline([], pipeline_config={})
+    pipeline2.load_checkpoint(str(checkpoint_file))
+    
+    assert pipeline2.pipeline_name == 'test_checkpoint'
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

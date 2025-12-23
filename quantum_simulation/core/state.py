@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from quantum_simulation.utils.numerical import integrate_1d
+from typing import Union, Tuple
 
 class QuantumState(ABC):
     """
@@ -152,6 +153,170 @@ class WaveFunctionState(QuantumState):
         
         return prob
 
+class WaveFunctionState2D(QuantumState):
+    """
+    État quantique en représentation position 2D.
+    
+    Fonction d'onde ψ(x,y) sur grille cartésienne.
+    
+    Attributes:
+        x_grid: Grille coordonnées X (1D array)
+        y_grid: Grille coordonnées Y (1D array)
+        wavefunction: ψ(x,y) array (nx, ny) complexe
+        dx: Pas spatial X
+        dy: Pas spatial Y
+    
+    Règles implémentées:
+        - R2.1 : Normalisation ∫∫|ψ|² dxdy = 1
+        - R2.4 : Densité probabilité ρ(x,y) = |ψ(x,y)|²
+    """
+    
+    def __init__(self, x_grid: np.ndarray, y_grid: np.ndarray, wavefunction: np.ndarray):
+        """
+        Args:
+            x_grid: Points grille X (nx,)
+            y_grid: Points grille Y (ny,)
+            wavefunction: ψ(x,y) array (nx, ny) complexe
+        """
+        if wavefunction.shape != (len(x_grid), len(y_grid)):
+            raise ValueError(
+                f"Forme wavefunction {wavefunction.shape} incompatible avec grille "
+                f"({len(x_grid)}, {len(y_grid)})"
+            )
+        
+        self.x_grid = np.array(x_grid, dtype=float)
+        self.y_grid = np.array(y_grid, dtype=float)
+        self.wavefunction = np.array(wavefunction, dtype=complex)
+        
+        # Pas spatiaux
+        self.dx = self.x_grid[1] - self.x_grid[0] if len(self.x_grid) > 1 else 1.0
+        self.dy = self.y_grid[1] - self.y_grid[0] if len(self.y_grid) > 1 else 1.0
+        
+        # Dimensions
+        self.nx = len(self.x_grid)
+        self.ny = len(self.y_grid)
+    
+    def norm(self) -> float:
+        """
+        Norme L² : ||ψ|| = √(∫∫|ψ(x,y)|² dxdy)
+        
+        Utilise intégration trapézoïdale 2D.
+        """
+        rho = np.abs(self.wavefunction)**2
+        norm_squared = np.sum(rho) * self.dx * self.dy
+        return np.sqrt(norm_squared)
+    
+    def normalize(self) -> 'WaveFunctionState2D':
+        """
+        Renormalise état : ||ψ|| = 1
+        
+        Returns:
+            Nouvel état normalisé
+        """
+        current_norm = self.norm()
+        if current_norm == 0:
+            raise ValueError("État nul ne peut être normalisé")
+        
+        normalized_wavefunction = self.wavefunction / current_norm
+        
+        return WaveFunctionState2D(
+            x_grid=self.x_grid,
+            y_grid=self.y_grid,
+            wavefunction=normalized_wavefunction
+        )
+    
+    def inner_product(self, other: 'WaveFunctionState2D') -> complex:
+        """
+        Produit scalaire ⟨self|other⟩ = ∫∫ ψ₁*(x,y) ψ₂(x,y) dxdy
+        
+        Args:
+            other: Autre état 2D
+            
+        Returns:
+            Produit scalaire (complexe)
+        """
+        if not np.allclose(self.x_grid, other.x_grid) or \
+            not np.allclose(self.y_grid, other.y_grid):
+            raise ValueError("Grilles spatiales incompatibles")
+        
+        integrand = np.conj(self.wavefunction) * other.wavefunction
+        result = np.sum(integrand) * self.dx * self.dy
+        
+        return result
+    
+    def probability_density(self) -> np.ndarray:
+        """
+        Densité probabilité ρ(x,y) = |ψ(x,y)|²
+        
+        Returns:
+            Array (nx, ny) réel positif
+        """
+        return np.abs(self.wavefunction)**2
+    
+    def probability_in_region(self, x_range: tuple, y_range: tuple) -> float:
+        """
+        Probabilité présence dans région [x₁,x₂] × [y₁,y₂]
+        
+        Args:
+            x_range: (x_min, x_max)
+            y_range: (y_min, y_max)
+            
+        Returns:
+            Probabilité ∈ [0,1]
+        """
+        x_min, x_max = x_range
+        y_min, y_max = y_range
+        
+        # Masques indices
+        x_mask = (self.x_grid >= x_min) & (self.x_grid <= x_max)
+        y_mask = (self.y_grid >= y_min) & (self.y_grid <= y_max)
+        
+        # Densité dans région
+        rho = self.probability_density()
+        rho_region = rho[np.ix_(x_mask, y_mask)]
+        
+        # Intégration
+        prob = np.sum(rho_region) * self.dx * self.dy
+        
+        return float(prob)
+    
+    def marginal_x(self) -> WaveFunctionState:
+        """
+        Distribution marginale en X : ρₓ(x) = ∫|ψ(x,y)|² dy
+        
+        Returns:
+            État 1D intégré sur Y
+        """
+        rho_2d = self.probability_density()
+        rho_x = np.sum(rho_2d, axis=1) * self.dy  # Intégration sur y
+        
+        # Normalisation
+        norm_x = np.sqrt(np.sum(rho_x) * self.dx)
+        psi_x = np.sqrt(rho_x) / norm_x if norm_x > 0 else np.sqrt(rho_x)
+        
+        return WaveFunctionState(
+            spatial_grid=self.x_grid,
+            wavefunction=psi_x.astype(complex)
+        )
+    
+    def marginal_y(self) -> WaveFunctionState:
+        """
+        Distribution marginale en Y : ρᵧ(y) = ∫|ψ(x,y)|² dx
+        
+        Returns:
+            État 1D intégré sur X
+        """
+        rho_2d = self.probability_density()
+        rho_y = np.sum(rho_2d, axis=0) * self.dx  # Intégration sur x
+        
+        # Normalisation
+        norm_y = np.sqrt(np.sum(rho_y) * self.dy)
+        psi_y = np.sqrt(rho_y) / norm_y if norm_y > 0 else np.sqrt(rho_y)
+        
+        return WaveFunctionState(
+            spatial_grid=self.y_grid,
+            wavefunction=psi_y.astype(complex)
+        )
 
 class WaveFunctionStateND:
     """
@@ -166,7 +331,7 @@ class WaveFunctionStateND:
     """
     
     def __init__(self, spatial_grid: Union[np.ndarray, Tuple[np.ndarray]],
-                 wavefunction: np.ndarray):
+                wavefunction: np.ndarray):
         """
         Args:
             spatial_grid: 

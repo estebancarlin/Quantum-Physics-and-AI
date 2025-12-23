@@ -1,0 +1,45 @@
+# quantum_simulation/experiments/batch_config/example_comparison.yaml
+pipeline_name: "Comparison k0 Variations"
+description: |
+  Compare 3 paquets gaussiens avec différentes impulsions initiales.
+
+experiments:
+  - name: "gaussian_k0_low"
+    class: "WavePacketEvolution"
+    config_override:
+      experiments:
+        wavepacket_evolution:
+          initial_state:
+            k0: 3.0e9
+          evolution:
+            t_final: 1.0e-15
+            
+  - name: "gaussian_k0_medium"
+    class: "WavePacketEvolution"
+    config_override:
+      experiments:
+        wavepacket_evolution:
+          initial_state:
+            k0: 5.0e9
+          evolution:
+            t_final: 1.0e-15
+            
+  - name: "gaussian_k0_high"
+    class: "WavePacketEvolution"
+    config_override:
+      experiments:
+        wavepacket_evolution:
+          initial_state:
+            k0: 8.0e9
+          evolution:
+            t_final: 1.0e-15
+
+comparison:
+  metrics:
+    - "mean_position"
+    - "mean_momentum"
+    - "position_uncertainty"
+  
+visualizations:
+  - "momentum_vs_time"
+  - "uncertainty_evolution"

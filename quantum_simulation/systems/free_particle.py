@@ -107,7 +107,7 @@ class FreeParticle:
                 f"Grille [{x[0]:.2e}, {x[-1]:.2e}] ne couvre pas ±5σ "
                 f"[{x_min_needed:.2e}, {x_max_needed:.2e}]. "
                 f"Normalisation et incertitudes seront imprécises.",
-                UserWarning
+                f"Suggestion: x_min={x_min_needed:.2e}, x_max={x_max_needed:.2e}"
             )
         
         # Construction paquet gaussien
