@@ -41,6 +41,29 @@ numerical_parameters:
     finite_difference_order: 2  # 2 ou 4 (décision D2)
     boundary_conditions: "dirichlet"  # Décision D3
 
+
+# ============================================================
+# ACCÉLÉRATION GPU (OPTIONNEL)
+# ============================================================
+gpu_settings:
+  enabled: true                     # Détection automatique GPU
+  force_gpu: false                  # Si true, erreur si GPU absent
+  device_id: 0                      # ID GPU (multi-GPU)
+  memory_fraction: 0.8              # Limite 80% VRAM
+  
+  # Seuils activation (éviter overhead CPU→GPU)
+  min_grid_size_1d: 1024            # GPU si nx > 1024
+  min_grid_size_2d: 256             # GPU si nx*ny > 256²
+  
+  # Méthodes préférées GPU
+  prefer_fft: true                  # FFT au lieu différences finies si possible
+  prefer_sparse_gpu: true           # CuPy sparse pour Crank-Nicolson
+  
+  # Debug
+  profile_transfers: false          # Mesurer temps CPU↔GPU
+  verbose: true                     # Logs activation GPU
+
+
 # ============================================================
 # PARAMÈTRES SPÉCIFIQUES AUX SYSTÈMES
 # ============================================================
@@ -123,6 +146,23 @@ experiments:
   heisenberg_validation:
     observables: ["position", "momentum"]
     test_states: []                    # Liste d'états à tester
+
+  double_slit_2d:
+    # CORRECTION ÉCHELLES PHYSIQUES
+    slit_separation: 1.0e-8      # d = 10 nm
+    slit_width: 2.0e-9           # w = 2 nm
+    barrier_position: 0.0
+    barrier_thickness: 2.0e-10
+    barrier_height: 1.0e-17
+    screen_distance: 1.0e-7      # D = 100 nm (×2)
+    
+    initial_state:
+      x0: -5.0e-8                # -50 nm
+      y0: 0.0
+      sigma_x: 3.0e-9            # 3 nm
+      sigma_y: 1.5e-9            # 1.5 nm (cohérence OK)
+      momentum_x: 5.0e-23        # 5e-24 kg·m/s (÷4)
+
 
 # ============================================================
 # VISUALISATION

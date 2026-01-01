@@ -1,0 +1,26 @@
+{
+  "pipeline_name": "gallery_2d",
+  "timestamp": "2025-12-23T21:16:34.574682",
+  "n_experiments": 1,
+  "experiment_names": [
+    "DoubleSlitExperiment"
+  ],
+  "execution_times": [
+    32.83607363700867
+  ],
+  "total_time": 32.83607363700867,
+  "all_passed": false,
+  "errors": [],
+  "results_summary": [
+    {
+      "experiment": "DoubleSlitExperiment",
+      "validations_passed": false,
+      "validation_details": {
+        "young_formula": false,
+        "delta_y_measured": true,
+        "delta_y_theory": true,
+        "relative_error": true
+      }
+    }
+  ]
+}
