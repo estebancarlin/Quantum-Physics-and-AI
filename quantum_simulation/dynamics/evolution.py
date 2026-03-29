@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import sparse
-# from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import spsolve
 from quantum_simulation.core.operators import Hamiltonian
 from quantum_simulation.core.state import QuantumState, EigenStateBasis, WaveFunctionState, WaveFunctionState2D
 from quantum_simulation.utils.gpu_manager import (
@@ -16,14 +16,12 @@ class TimeEvolution:
     Évolution temporelle par intégration équation Schrödinger.
     """
     
-    def __init__(self, hamiltonian: Hamiltonian, hbar: float):
+    def __init__(self, hamiltonian: Hamiltonian):
         """
         Args:
-            hamiltonian: Hamiltonien du système
-            hbar: Constante de Planck réduite (J·s)
+            hamiltonian: Hamiltonien du système (contient hbar et mass)
         """
         self.hamiltonian = hamiltonian
-        self.hbar = hbar
     
     def _build_hamiltonian_matrix_sparse(self, 
                                         spatial_grid: np.ndarray,
@@ -72,18 +70,21 @@ class TimeEvolution:
         
         return H_matrix
     
-    def _build_hamiltonian_3d_sparse(grid_3d, potential):
+    def _build_hamiltonian_3d_sparse(self, grid_3d, potential):
         """
-        Matrice H 3D creuse (format COO → CSR).
-        
-        Complexité:
-            - Mémoire : O(N) avec N = nx·ny·nz
-            - Construction : O(N) (7 diagonales)
+        Matrice H 3D creuse — non implémentée.
+
+        Structure cible :
+            Δ₃D = Δₓ ⊗ Iᵧ ⊗ I_z + Iₓ ⊗ Δᵧ ⊗ I_z + Iₓ ⊗ Iᵧ ⊗ Δ_z
+        via scipy.sparse.kron().
+
+        Raises:
+            NotImplementedError
         """
-        from scipy.sparse import diags, kron
-        
-        # Laplacien = Δₓ ⊗ Iᵧ ⊗ Iᵧ + Iₓ ⊗ Δᵧ ⊗ Iᵧ + Iₓ ⊗ Iᵧ ⊗ Δᵧ
-        # Implémentation produits Kronecker optimisés
+        raise NotImplementedError(
+            "_build_hamiltonian_3d_sparse non implémenté. "
+            "Utiliser evolve_wavefunction() (1D) ou evolve_wavefunction_2d() (2D)."
+        )
     
     def evolve_wavefunction(self, initial_state: WaveFunctionState, 
                         t0: float, t: float, dt: float,
@@ -108,7 +109,6 @@ class TimeEvolution:
             - Décision D1 : Crank-Nicolson
             - GPU : CuPy sparse matrices
         """
-        from scipy.sparse.linalg import spsolve
         from scipy.sparse import eye
         import warnings
         
@@ -265,8 +265,7 @@ class TimeEvolution:
             États ψ(tᵢ) pour chaque temps
         """
         from scipy.sparse import diags
-        from scipy.sparse.linalg import spsolve
-        
+
         # Import WaveFunctionState2D
         from quantum_simulation.core.state import WaveFunctionState2D
         

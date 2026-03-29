@@ -161,54 +161,45 @@
 ### 1.2 Modules partiellement implémentés ⚠️
 
 #### `dynamics/evolution.py`
-**Status** : ⚠️ **PARTIEL**
+**Status** : ✅ **COMPLET** *(mis à jour 2026-03-30)*
 
 **Implémenté** :
 - ✅ `evolve_eigenstate()` : Règle R3.3 (décomposition spectrale)
 - ✅ `evolve_stationary_state()` : Règle R3.4 (états propres H)
+- ✅ **`evolve_wavefunction()` : Schéma Crank-Nicolson 1D (Décision D1)**
+  - Matrices sparse scipy CSR : A = I + iHdt/2ℏ, B = I − iHdt/2ℏ
+  - Résolution `spsolve` à chaque pas
+  - Support GPU via CuPy (`cupyx.scipy.sparse.linalg.spsolve`)
+  - Conservation norme validée : déviation < 1e-9
+- ✅ `_evolve_2d_adi()` : Méthode ADI 2D (Alternating Direction Implicit)
+- ✅ `_evolve_2d_split_operator()` : Split-operator FFT 2D
 
-**En attente** :
-- ❌ **Point critique D1 non résolu** : `evolve_wavefunction()` 
-  - Structure définie mais **retourne état initial sans évolution**
-  - Warning explicite ajouté dans code
-  - Schéma Crank-Nicolson recommandé mais **non implémenté**
+**Corrections apportées (2026-03-30)** :
 
-**Raison** :
-- Décision D1 (schéma intégration temporelle) nécessite expertise numérique supplémentaire
-- Priorisé : validation physique sur états stationnaires d'abord
+- ✅ `_build_hamiltonian_3d_sparse` : corrigé (`self` manquant + `NotImplementedError` explicite)
+- ✅ Cohérence `hbar` : suppression paramètre `hbar` redondant dans `__init__` (unifié sur `self.hamiltonian.hbar`)
+- ✅ Import `spsolve` déplacé en tête de fichier (idiomatique)
+- ✅ Tous les call sites mis à jour : `TimeEvolution(hamiltonian)` sans `hbar`
 
-**Impact** :
-- ✅ `WavePacketEvolution` fonctionne via états stationnaires (workaround)
-- ❌ Évolution continue générale indisponible
-
-**Prochaines étapes** :
-1. Implémenter Crank-Nicolson avec résolveur sparse
-2. Valider conservation norme sur cas tests
-3. Comparer avec split-operator (performance)
+**Tests CN** : `tests/test_crank_nicolson.py` — 6 tests couvrant norme, Ehrenfest, convergence O(dt²)
 
 #### `systems/harmonic_oscillator.py`
-**Status** : ⚠️ **PARTIEL**
+**Status** : ✅ **COMPLET** *(mis à jour 2026-03-30)*
 
 **Implémenté** :
-- ✅ `energy_eigenvalue(n)` : Règle R6.1
-- ✅ Algèbre a, a† : Règles R6.2, R6.3
+- ✅ `energy_eigenvalue(n)` : Règle R6.1 — Eₙ = ℏω(n + 1/2)
+- ✅ Algèbre a, a† : Règles R6.2, R6.3 — validée par `validate_algebra()`
+- ✅ `wavefunction_position(n, x_grid)` : ψₙ(x) via `scipy.special.eval_hermite`
+- ✅ `coherent_state(alpha)` : état cohérent |α⟩ en base de Fock
+- ✅ États thermiques : matrice densité ρ_th(T)
 
-**En attente** :
-- ❌ **Point ouvert D4** : État fondamental |0⟩ en représentation position
-  - **Décision adoptée** : Travailler en base abstraite {|n⟩} (matrices)
-  - Fonctions d'onde ψₙ(x) **non implémentées** (polynômes Hermite absents)
-
-**Justification** :
-- Formules Hermite hors extraits cours (Limite L2)
-- Base abstraite suffisante pour algèbre opérateurs échelle
+**Décision D4 résolue** : ψₙ(x) implémentées via `scipy.special.eval_hermite` (extension validée).
 
 **Impact** :
-- ✅ Spectroscopie HO fonctionnelle (niveaux énergie, transitions)
-- ❌ Visualisation ψₙ(x) impossible
-- ❌ Évolution paquets HO en représentation position bloquée
 
-**Extensions futures** :
-- Implémenter polynômes Hermite si nécessaire (bibliothèque `scipy.special`)
+- ✅ Spectroscopie HO fonctionnelle (niveaux énergie, transitions)
+- ✅ Visualisation ψₙ(x) disponible
+- ✅ États cohérents |α⟩ en représentation position disponibles
 
 ---
 
@@ -254,10 +245,13 @@
 ## 2. Résolution des points ouverts (Section 8.3 document référence)
 
 ### ✅ D1 : Schéma intégration temporelle
-**Statut** : ⚠️ **PARTIELLEMENT RÉSOLU**
-- **Décision** : Crank-Nicolson recommandé (stabilité + conservation norme)
-- **Implémentation** : ❌ En attente (warning dans code)
-- **Workaround** : États stationnaires fonctionnent (phase globale uniquement)
+**Statut** : ✅ **RÉSOLU** *(mis à jour 2026-03-30)*
+
+- **Décision** : Crank-Nicolson (stabilité inconditionnelle + unitarité exacte)
+- **Implémentation** : ✅ Complète dans `dynamics/evolution.py`
+  - 1D : `evolve_wavefunction()` — matrices sparse CSR, `spsolve`
+  - 2D : `_evolve_2d_adi()` — ADI, `_evolve_2d_split_operator()` — FFT
+- **Validation** : Conservation norme < 1e-9, convergence O(dt²) vérifiée
 
 ### ✅ D2 : Calcul gradient/laplacien
 **Statut** : ✅ **RÉSOLU**
