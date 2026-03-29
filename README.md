@@ -176,17 +176,55 @@ All experiments automatically verify:
 
 ## Visualization Gallery
 
-6-panel synchronized dashboard from `example_gaussian_2d_evolution.py`:
+### 2D Wavepacket Evolution — Animated Dashboard
 
-```
-[Density rho(x,y,t)]   [Marginals rho_x, rho_y]   [Observables <X>, <Y>]
-[Current J(x,y,t)]     [Heisenberg dX*dY]          [Norm conservation]
-```
+![2D Evolution Dashboard](quantum_simulation/results/gaussian_2d/evolution_dashboard.gif)
 
-Generated outputs are in [`quantum_simulation/results/`](quantum_simulation/results/):
-- `gaussian_2d/evolution_dashboard.gif` — 50-frame 2D wavepacket dashboard
-- `double_slit/` — double slit interference pattern and animation
-- `measurement_distributions_infinite_well.png` — Born rule vs empirical (1000 measurements)
+*6-panel synchronized dashboard: density ρ(x,y,t), marginals ρₓ/ρᵧ, observables ⟨X⟩⟨Y⟩, probability current J, Heisenberg product ΔX·ΔY, norm conservation over 50 frames.*
+
+---
+
+### 2D Wavepacket — Density & 3D Surface
+
+| Initial density ρ(x,y,0) | Wavefunction |ψ(x,y,0)| |
+| --- | --- |
+| ![Density t=0](quantum_simulation/results/gaussian_2d/density_t0.png) | ![3D Surface](quantum_simulation/results/gaussian_2d/wavefunction_3d_t0.png) |
+
+| Final density ρ(x,y,t=5fs) | Probability current J(x,y) |
+| --- | --- |
+| ![Density final](quantum_simulation/results/gaussian_2d/density_final.png) | ![Current field](quantum_simulation/results/gaussian_2d/current_final.png) |
+
+---
+
+### 2D Wavepacket — Marginal Distributions
+
+![Marginals](quantum_simulation/results/gaussian_2d/marginals_final.png)
+
+*Projected densities ρₓ(x) and ρᵧ(y) extracted from the 2D state at t=5fs.*
+
+---
+
+### Double Slit Experiment — Interference
+
+![Double Slit Evolution](quantum_simulation/results/double_slit/double_slit_evolution.gif)
+
+*2D wavepacket diffracting through a double slit barrier — density ρ(x,y,t) animated.*
+
+![Screen Distribution](quantum_simulation/results/double_slit/screen_distribution.png)
+
+*Intensity distribution at the detection screen. Fringe spacing Δy = λD/d consistent with Young's formula.*
+
+---
+
+### Measurement Statistics — Born Rule Validation
+
+![Measurement Distributions (Infinite Well)](quantum_simulation/results/measurement_distributions_infinite_well.png)
+
+*1000 energy measurements on a superposition state in the infinite well. Empirical histogram vs theoretical |cₙ|² predictions. Chi-squared test: p-value = 0.77.*
+
+![Measurement Distributions (Free Particle)](quantum_simulation/results/measurement_distributions_free_particle.png)
+
+*Momentum measurement distribution for a Gaussian wavepacket. Empirical outcome vs |φ(p)|² (Fourier transform of ψ).*
 
 ---
 
