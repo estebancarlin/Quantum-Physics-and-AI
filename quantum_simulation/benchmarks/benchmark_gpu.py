@@ -187,7 +187,7 @@ def benchmark_crank_nicolson():
     H.dimension = 1
     H.potential = lambda x: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     # Paramètres évolution
     t0 = 0.0

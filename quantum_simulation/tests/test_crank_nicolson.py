@@ -42,7 +42,7 @@ def test_conservation_norm_exact():
     )
     
     # Évolution Crank-Nicolson
-    time_evolution = TimeEvolution(free_particle.hamiltonian, hbar)
+    time_evolution = TimeEvolution(free_particle.hamiltonian)
     
     dt = 1e-17
     t_final = 1e-15
@@ -81,7 +81,7 @@ def test_ehrenfest_theorem():
     p0_mean = P.expectation_value(psi0)
     
     # Évolution
-    time_evolution = TimeEvolution(free_particle.hamiltonian, hbar)
+    time_evolution = TimeEvolution(free_particle.hamiltonian)
     dt = 1e-17
     t1 = 5e-16
     
@@ -125,7 +125,7 @@ def test_convergence_order_dt():
         k0=0.0
     )
     
-    time_evolution = TimeEvolution(free_particle.hamiltonian, hbar)
+    time_evolution = TimeEvolution(free_particle.hamiltonian)
     
     # ✅ CORRECTION : Temps plus long pour accumuler erreurs temporelles
     t_final = 5e-16  # ← 5× plus long
@@ -184,7 +184,7 @@ def test_convergence_coupled_refinement():
             k0=0.0
         )
         
-        time_evolution = TimeEvolution(free_particle.hamiltonian, hbar)
+        time_evolution = TimeEvolution(free_particle.hamiltonian)
         
         # Solution référence : grille ultra-fine
         x_ref = np.linspace(-10*sigma_x, 10*sigma_x, 4096)
@@ -195,7 +195,7 @@ def test_convergence_coupled_refinement():
             k0=0.0
         )
         
-        time_evolution_ref = TimeEvolution(free_particle.hamiltonian, hbar)
+        time_evolution_ref = TimeEvolution(free_particle.hamiltonian)
         psi_ref = time_evolution_ref.evolve_wavefunction(psi0_ref, 0.0, 5e-16, 5e-19)
         
         # Solution test
@@ -251,7 +251,7 @@ def test_convergence_analytical_gaussian():
         k0=k0
     )
     
-    time_evolution = TimeEvolution(free_particle.hamiltonian, hbar)
+    time_evolution = TimeEvolution(free_particle.hamiltonian)
     
     from quantum_simulation.core.operators import PositionOperator, MomentumOperator
     X = PositionOperator()
@@ -329,7 +329,7 @@ def test_convergence_analytical_gaussian_coupled():
         x = np.linspace(-10*sigma_x, 10*sigma_x, nx)
         
         psi0 = free_particle.create_gaussian_wavepacket(x, 0.0, sigma_x, k0)
-        time_evolution = TimeEvolution(free_particle.hamiltonian, hbar)
+        time_evolution = TimeEvolution(free_particle.hamiltonian)
         psi_t = time_evolution.evolve_wavefunction(psi0, 0.0, t_final, dt)
         
         x_measured = X.expectation_value(psi_t)

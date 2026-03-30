@@ -117,7 +117,7 @@ class DoubleSlitExperiment(Experiment):
         print(f"    Temps vol = {t_vol*1e15:.2f} fs")
         print(f"    t_final = {t_final*1e15:.2f} fs")
         
-        evolver = TimeEvolution(self.hamiltonian, self.hbar)
+        evolver = TimeEvolution(self.hamiltonian)
         
         self.evolved_states = evolver.evolve_wavefunction_2d(
             self.initial_state,

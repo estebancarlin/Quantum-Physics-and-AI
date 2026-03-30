@@ -130,8 +130,7 @@ class WavePacketEvolution(Experiment):
         
         # Création objet évolution
         self.time_evolution = TimeEvolution(
-            hamiltonian=self.free_particle.hamiltonian,
-            hbar=self.hbar
+            hamiltonian=self.free_particle.hamiltonian
         )
         
         # Évolution aux temps d'échantillonnage

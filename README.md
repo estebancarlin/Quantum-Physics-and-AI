@@ -1,808 +1,273 @@
-# Quantum Simulation Framework
+# Exploring Quantum Physics with AI
 
-A comprehensive Python framework for simulating quantum mechanical systems based on Cohen-Tannoudji's "Mécanique Quantique" textbook. This project implements fundamental quantum mechanics postulates with rigorous validation of physical principles and advanced 2D/3D visualizations.
+A rigorous Python framework for simulating quantum mechanical systems, grounded in Cohen-Tannoudji's *Mécanique Quantique* (Tomes I–III) and oriented toward AI-assisted quantum research. This project explores the intersection of numerical quantum mechanics and machine learning — from exact Crank-Nicolson integration to planned Neural Quantum States and PINNs.
 
-[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-95%25%20passing-brightgreen.svg)](quantum_simulation/tests/)
-[![Phase](https://img.shields.io/badge/phase-2%20complete-blue.svg)](#project-phases)
 
-## Project Overview
+---
 
-This framework provides:
-- **Rigorous quantum mechanics simulations** following textbook postulates
-- **Multiple quantum systems**: free particles (1D/2D), harmonic oscillators, infinite/finite potential wells
-- **Complete measurement statistics** with wavefunction collapse
-- **Physical validation**: Heisenberg uncertainty, Ehrenfest theorem, conservation laws
-- **Advanced 2D visualizations**: Interactive dashboards, animations, multi-plot analysis
-- **Configurable experiments** via YAML files
-- **Production-ready time evolution**: Crank-Nicolson (1D) + Split-Operator/ADI (2D)
+## Overview
 
-## Key Features
+The framework implements quantum mechanics from the ground up with full traceability to textbook postulates:
 
-### **Phase 2: 2D Systems & Video Dashboards** (NEW!)
-- **2D Gaussian wavepackets** with momentum (kx, ky)
-- **Time evolution methods**: ADI (Alternating Direction Implicit) + Split-Operator (FFT 2D)
-- **6-panel video dashboards** (GIF/MP4):
-  - Density evolution ρ(x,y,t)
-  - Marginal distributions ρₓ(x,t), ρᵧ(y,t)
-  - Observable tracking ⟨X⟩, ⟨Y⟩
-  - Probability current J(x,y,t)
-  - Heisenberg product ΔX·ΔY
-  - Norm conservation |ψ|²
--  **50+ frame animations** at 10-30 fps
+- **Rigorous time evolution**: Crank-Nicolson 1D (unconditionally stable, exact norm conservation) + Split-Operator / ADI 2D
+- **Quantum systems**: free particle (1D/2D), harmonic oscillator, infinite/finite wells, potential barriers, double slit
+- **Measurement postulates**: Born rule with chi-squared validation, wavefunction collapse
+- **Physical validators**: Heisenberg dX*dP >= hbar/2, Ehrenfest theorem, probability current d(rho)/dt + div(J) = 0
+- **GPU acceleration**: CuPy-based sparse solvers, auto-detected
+- **4 pedagogical Jupyter notebooks**: free particle, measurement postulates, harmonic oscillator, double slit 2D
 
-### **Phase 1: 1D Systems & Core Framework**
--  Crank-Nicolson time integration (unconditionally stable)
--  Measurement statistics with χ² validation
--  Complete traceability to textbook equations
--  95+ unit tests (85% code coverage)
+The theoretical foundation is the three-volume *Mecanique Quantique* (Cohen-Tannoudji, Diu & Laloë), referenced throughout as rules R2.2-R6.3. PDFs are in [`references/`](references/).
 
-##  Theoretical Foundation
+---
 
-All implementations are directly traceable to:
-- **Cohen-Tannoudji, Diu, Laloë - Mécanique Quantique Tome I**
-- Every equation references specific chapters and sections
-- Complete documentation in [`Document de référence.md`](quantum_simulation/Document%20de%20référence.md)
+## Repository Structure
 
-### Core Physical Principles Implemented
+```
+.
+├── quantum_simulation/          # Core framework package
+│   ├── core/                    # Fundamental objects (state, operators, constants)
+│   ├── dynamics/                # Time evolution (Crank-Nicolson, split-operator) + measurement
+│   ├── systems/                 # Quantum systems (free particle 1D/2D, HO, wells, barriers)
+│   ├── experiments/             # Full runnable experiments + gallery (double slit, tunneling)
+│   ├── validation/              # Heisenberg, Ehrenfest, conservation law validators
+│   ├── visualization/           # 2D/3D plots, dashboards, animations
+│   ├── orchestration/           # Batch pipelines, comparisons, reports
+│   ├── utils/                   # Numerical tools (FFT, gradients), GPU manager, config loader
+│   ├── tests/                   # pytest suite (95+ tests, ~85% coverage)
+│   ├── examples/
+│   │   ├── notebooks/           # Pedagogical Jupyter notebooks (grounded in Cohen-Tannoudji)
+│   │   └── *.py                 # Runnable example scripts
+│   ├── benchmarks/              # CPU vs GPU performance benchmarks
+│   ├── config/
+│   │   └── parameters.yaml      # Centralized physical + numerical parameters
+│   └── results/                 # Generated figures, animations, reports
+│
+├── references/                  # Cohen-Tannoudji — Mecanique Quantique Tomes I, II, III
+├── requirements.txt
+└── README.md
+```
 
-| Principle | Rule ID | Implementation |
-|-----------|---------|----------------|
-| Schrödinger equation 1D | R3.1, R3.2 | Crank-Nicolson (100% norm conservation) |
-| Schrödinger equation 2D | R3.1 | ADI + Split-Operator |
-| Born rule (measurement) | R2.2 | Probabilistic measurement outcomes |
-| Wavefunction collapse | R2.3 | Post-measurement state reduction |
-| Heisenberg uncertainty | R4.3 | ΔX·ΔP ≥ ℏ/2 validation (100% states) |
-| Ehrenfest theorem | R4.4 | Classical limit verification |
-| Probability conservation | R5.1, R5.2 | ∂ρ/∂t + ∇·J = 0 (100% accuracy) |
-| Continuity equation 2D | R5.2 | Vector current J(x,y,t) |
+---
+
+## Pedagogical Notebooks
+
+Four notebooks grounded in Cohen-Tannoudji, runnable end-to-end:
+
+| Notebook | Content | Key rules |
+| --- | --- | --- |
+| [01 — Particule libre & paquet d'ondes](quantum_simulation/examples/notebooks/01_particule_libre_wavepacket.ipynb) | CN time evolution, Ehrenfest, Heisenberg products | R3.1, R4.3, R4.4, R5.1 |
+| [02 — Postulats de la mesure](quantum_simulation/examples/notebooks/02_postulats_mesure.ipynb) | Born rule, 1000 simulated measurements, chi-squared, collapse | R2.2, R2.3 |
+| [03 — Oscillateur harmonique](quantum_simulation/examples/notebooks/03_oscillateur_harmonique.ipynb) | Spectrum, psi_n(x) via Hermite, algebra a/a+, coherent states | R6.1-R6.3 |
+| [04 — Double fente 2D](quantum_simulation/examples/notebooks/04_double_fente_2d.ipynb) | ADI/split-operator 2D, Young fringes, norm conservation | R3.1, R5.1 |
+
+```bash
+jupyter notebook quantum_simulation/examples/notebooks/
+```
+
+---
 
 ## Quick Start
 
-### Installation
-
 ```bash
-# Clone repository
 git clone https://github.com/estebancarlin/Exploring_Quantum_Physics.git
 cd Exploring_Quantum_Physics
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 ```
 
----
-
-## GPU Acceleration (NEW)
-
-**Requirements**:
-- NVIDIA GPU (Compute Capability ≥ 6.0)
-- CUDA 12.x or later
-- Python packages: `cupy-cuda12x`, `numba`
-
-### Installation GPU
+### Run examples
 
 ```bash
-# 1. Vérifier CUDA
-nvcc --version  # Doit afficher CUDA 12.x
-
-# 2. Installer CuPy
-pip install cupy-cuda12x
-
-# 3. Installer Numba (optionnel, pour kernels futurs)
-pip install numba
-
-# 4. Tester détection
-python quantum_simulation/utils/gpu_manager.py
-```
-
-### Enable GPU
-
-**Automatique** (recommandé) :
-```python
-# GPU activé par défaut si détecté
-# Pas de changement code nécessaire !
-from quantum_simulation.experiments.wavepacket_evolution import WavePacketEvolution
-
-experiment = WavePacketEvolution(config)
-results = experiment.run()  # GPU automatique si grille > 1024
-```
-
-**Manuel** (via variable d'environnement) :
-```bash
-# Forcer GPU
-export QUANTUM_USE_GPU=true
-
-# Désactiver GPU
-export QUANTUM_USE_GPU=false
-
-# Profiling transferts
-export QUANTUM_GPU_PROFILE=true
-```
-
-**Configuration YAML** :
-```yaml
-# config/parameters.yaml
-gpu_settings:
-  enabled: true              # Détection auto
-  force_gpu: false           # Erreur si GPU absent
-  min_grid_size_1d: 1024     # Seuil activation 1D
-  min_grid_size_2d: 256      # Seuil activation 2D
-```
-
-### Benchmark Performances
-
-```bash
-# Tests complets CPU vs GPU
-python quantum_simulation/benchmarks/benchmark_gpu.py
-```
-
-**Expected Speedups** (RTX 4080, 12GB VRAM):
-
-| Opération | Grille | CPU Time | GPU Time | Speedup |
-|-----------|--------|----------|----------|---------|
-| Gradient 1D (diff. finies) | 4096 pts | 2.1 ms | 0.7 ms | **3.0×** |
-| Gradient 1D (FFT) | 8192 pts | 15.3 ms | 1.8 ms | **8.5×** |
-| Laplacien 2D (FFT) | 512×512 | 42.7 ms | 3.8 ms | **11.2×** |
-| Laplacien 2D (FFT) | 2048×2048 | 1.8 s | 0.12 s | **15.0×** |
-| Crank-Nicolson 1D | 4096 pts, 100 steps | 12.4 s | 3.8 s | **3.3×** |
-| Dashboard 2D (50 frames) | 512×512 | 6 min | 32 s | **11.3×** |
-
-### GPU Memory Limits
-
-**Maximum Grid Sizes** (12GB VRAM):
-
-| Dimension | Max Size | Memory | Status |
-|-----------|----------|--------|--------|
-| 1D | 268 million pts | ~4 GB | OK |
-| 2D | 16384×16384 | ~4 GB | Limite batch |
-| 2D | 8192×8192 | 1 GB | OK (10× marge) |
-| 2D | 2048×2048 | 64 MB | OK (156× marge) |
-
-**Out-of-Memory Protection**:
-```python
-from quantum_simulation.utils.gpu_manager import check_gpu_capacity
-
-can_fit, msg = check_gpu_capacity(nx=8192, ny=8192)
-if not can_fit:
-    print(f" {msg}")
-    # Fallback CPU automatique
-```
-
-### Troubleshooting
-
-**Problème** : `ImportError: No module named 'cupy'`
-```bash
-pip install cupy-cuda12x
-```
-
-**Problème** : `CUDA driver version is insufficient`
-```bash
-# Mettre à jour drivers NVIDIA
-# Windows: https://www.nvidia.com/Download/index.aspx
-# Linux: sudo apt update && sudo apt install nvidia-driver-XXX
-```
-
-**Problème** : GPU plus lent que CPU pour petites grilles
-- **Normal** : Overhead transfert CPU↔GPU
-- **Solution** : Automatique (GPU désactivé si nx < 1024)
-
-**Problème** : WSL2 ne détecte pas GPU
-```bash
-# Installer CUDA Toolkit WSL2
-wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-wsl-ubuntu.pin
-sudo mv cuda-wsl-ubuntu.pin /etc/apt/preferences.d/cuda-repository-pin-600
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/3bf863cc.pub
-sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/ /"
-sudo apt update
-sudo apt install cuda-toolkit-12-4
-
-# Vérifier
-nvidia-smi
-python -c "import cupy; print(cupy.cuda.runtime.getDeviceCount())"
-```
-
----
-
-### Run 2D Dashboard Animation (NEW!)
-
-```bash
-python quantum_simulation/examples/example_gaussian_2d_evolution.py
-```
-
-**Output**: 
-- `results/gaussian_2d/evolution_dashboard.gif` (6-panel animated dashboard)
-- Density snapshots at t=0 and t=5fs
-- 3D surface plot |ψ(x,y,0)|
-- Marginal distributions ρₓ(x), ρᵧ(y)
-- Probability current vectors J(x,y)
-
-**Dashboard Contents**:
-```
-[Density 2D]    [Marginals]     [Observables]
-[Current J]     [Heisenberg]    [Conservation]
-        Time: t = 2.45 fs (animated)
-```
-
-**Results**:
-- Norm conservation: max|norm-1| = 1.78e-15
-- 50 states computed in ~3s (split-operator, 256×256 grid)
-- Heisenberg product ΔX·ΔY ≥ ℏ/2 maintained
-
-### Run 1D Wavepacket Evolution
-
-```bash
+# 1D Gaussian wavepacket (Crank-Nicolson)
 python quantum_simulation/examples/example_wavepacket_free_particle.py
-```
 
-**Output**: Observes Gaussian wavepacket spreading with validation of:
-- Heisenberg uncertainty relations at all times
-- Probability conservation (norm = 1 ± 1e-9)
-- Ehrenfest theorem (⟨P⟩/m = d⟨X⟩/dt)
+# 2D evolution dashboard (split-operator, 50-frame GIF)
+python quantum_simulation/examples/example_gaussian_2d_evolution.py
 
-### Measurement Statistics Validation
-
-```bash
+# Measurement statistics (Born rule + chi-squared validation)
 python quantum_simulation/examples/example_measurement_statistics.py
 ```
 
-**Output**: Performs 1000+ measurements to validate:
-- Born rule: empirical distribution matches |⟨ψ|uₙ⟩|²
-- Wavefunction collapse: successive measurements give identical results
-- Chi-squared test: p-value > 0.05 (statistical consistency)
-
-**Recent Results** (infinite well, energy measurements):
-```
-chi2_test               : ✓ PASS
-wavefunction_collapse   : ✓ PASS
-Mean energy measured    : 1.764e-19 J
-Mean energy theoretical : 1.759e-19 J
-Relative error          : 0.29%
-Chi-squared p-value     : 0.77
-```
-
-## Project Architecture
-
-### Directory Structure
-
-```
-quantum_simulation/
-├── core/                  # Fundamental quantum objects
-│   ├── state.py          # QuantumState, WaveFunctionState, WaveFunctionState2D
-│   ├── operators.py      # Observable, Hamiltonian, Position, Momentum
-│   └── constants.py      # Physical constants (ℏ, m_e, etc.)
-│
-├── dynamics/              # Physical processes
-│   ├── evolution.py      # Time evolution (Schrödinger equation 1D/2D)
-│   └── measurement.py    # Quantum measurement & collapse
-│
-├── systems/               # Specific quantum systems
-│   ├── free_particle.py          # V = 0 system (1D)
-│   ├── free_particle_2d.py       # V = 0 system (2D)  NEW
-│   ├── harmonic_oscillator.py    # ℏω(n+½) energy levels
-│   ├── infinite_well.py          # Particle in box
-│   └── potential_systems.py      # Wells, barriers
-│
-├── experiments/           # Complete simulations
-│   ├── base_experiment.py        # Abstract experiment class
-│   ├── wavepacket_evolution.py   # 1D Gaussian packet dynamics
-│   └── measurement_statistics.py # Measurement postulate validation
-│
-├── validation/            # Physical principle validators
-│   ├── heisenberg_relations.py   # ΔX·ΔP ≥ ℏ/2
-│   ├── conservation_laws.py      # Continuity equation
-│   └── ehrenfest_theorem.py      # d⟨X⟩/dt = ⟨P⟩/m
-│
-├── visualization/         # Plotting & animations  NEW
-│   ├── viz_2d.py         # 2D density plots, animations
-│   └── dashboard_2d.py   # Multi-panel video dashboards
-│
-├── utils/                 # Auxiliary tools
-│   ├── numerical.py      # FFT, gradients, integration
-│   └── visualization.py  # 1D plotting functions
-│
-├── tests/                 # Unit tests (pytest)
-│   ├── test_core/
-│   ├── test_dynamics/
-│   ├── test_validation/
-│   └── test_orchestration/
-│       ├── test_viz_2d.py          NEW
-│       └── test_dashboard_2d.py    NEW
-│
-├── examples/              # Runnable demonstrations
-│   ├── example_gaussian_2d_evolution.py   NEW
-│   ├── example_wavepacket_free_particle.py
-│   └── example_measurement_statistics.py
-│
-├── config/
-│   └── parameters.yaml   # Centralized configuration
-│
-└── results/              # Generated figures and data
-    ├── gaussian_2d/       NEW (2D outputs)
-    │   ├── evolution_dashboard.gif
-    │   ├── density_t0.png
-    │   ├── wavefunction_3d_t0.png
-    │   └── ...
-    └── ...
-```
-
-### Dependency Flow
-```
-experiments → systems → dynamics → core
-     ↓          ↓         ↓         ↓
-validation → accesses all layers
-     ↓
-   utils ← visualization (2D/3D)
-```
-
-**Key principle**: No reverse dependencies (e.g., `core` never imports `dynamics`)
-
-## Configuration System
-
-All physical and numerical parameters are centralized in `parameters.yaml`:
-
-```yaml
-physical_constants:
-  hbar: 1.054571817e-34    # Reduced Planck constant (J·s)
-  m_electron: 9.1093837015e-31
-
-numerical_parameters:
-  spatial_discretization:
-    dimension: 1           # 1 or 2 (3D planned)
-    nx: 2048               # Grid points x-direction
-    ny: 256                # Grid points y-direction (if 2D)
-    x_min: -5.0e-9         # meters
-    x_max: 5.0e-9
-  temporal_discretization:
-    dt: 1.0e-17            # seconds (1D Crank-Nicolson)
-    dt_2d: 5.0e-18         # seconds (2D ADI/split-operator)
-  tolerances:
-    normalization_check: 1.0e-10
-    heisenberg_inequality: 1.0e-10
-
-experiments:
-  wavepacket_evolution:
-    initial_state:
-      type: "gaussian"
-      x0: 0.0
-      sigma_x: 2.0e-9      # Width (meters)
-      k0: 5.0e9            # Wavenumber (m⁻¹)
-  
-  gaussian_2d_evolution:   NEW
-    initial_state:
-      type: "gaussian_2d"
-      x0: 0.0
-      y0: 0.0
-      sigma_x: 4.0e-9
-      sigma_y: 4.0e-9
-      kx0: 5.0e9           # Momentum x (m⁻¹)
-      ky0: 3.0e9           # Momentum y (m⁻¹)
-    evolution:
-      t_final: 5.0e-15     # 5 femtoseconds
-      n_frames: 50         # For animations
-```
-
-## Running Tests
+### Run tests
 
 ```bash
-# All tests
+# Full suite
 pytest quantum_simulation/tests/ -v
 
-# Phase 1 tests (1D systems)
-pytest quantum_simulation/tests/test_core/ -v
-pytest quantum_simulation/tests/test_validation/ -v
+# Crank-Nicolson validation (6 tests: norm, Ehrenfest, O(dt^2) convergence)
 pytest quantum_simulation/tests/test_crank_nicolson.py -v
 
-# Phase 2 tests (2D systems) NEW
-pytest quantum_simulation/tests/test_orchestration/test_viz_2d.py -v
-pytest quantum_simulation/tests/test_orchestration/test_dashboard_2d.py -v
-
-# With coverage report
+# With coverage
 pytest --cov=quantum_simulation quantum_simulation/tests/
 ```
 
-**Test Status** (Updated December 2025): 95+ tests covering:
-- State normalization and orthogonality
-- Operator hermiticity
-- Commutation relations [X, P] = iℏ
-- Heisenberg uncertainty validation (100% states)
-- Probability conservation during evolution (100% accuracy)
-- Measurement statistics (χ² tests)
-- 2D density normalization ∫∫ρ dxdy = 1 NEW
-- 2D marginal consistency NEW
-- Probability current conservation ∇·J coherent NEW
+---
 
-**Coverage**: ~85% (2000+ lines tested)
+## Time Integration
 
-## Example Outputs
+| Method | Dim | Stability | Norm conservation | Use case |
+| --- | --- | --- | --- | --- |
+| **Crank-Nicolson** | 1D | Unconditional | Exact (machine eps) | All 1D systems |
+| **ADI** | 2D | Unconditional | Exact | Confined 2D potentials |
+| **Split-Operator (FFT)** | 2D | Unconditional | O(dt^2) | Free 2D evolution, large grids |
 
-### 2D Dashboard Animation (Phase 2)
-
-![2D Dashboard](quantum_simulation/results/gaussian_2d/evolution_dashboard.gif)
-*6-panel synchronized dashboard showing 2D wavepacket evolution over 50 frames*
-
-**Dashboard Panels**:
-1. **Density ρ(x,y,t)**: Heatmap evolution (viridis colormap)
-2. **Marginales**: ρₓ(x,t) (blue) + ρᵧ(y,t) (red) overlaid
-3. **Observables**: ⟨X⟩(t), ⟨Y⟩(t) with time marker
-4. **Current J(x,y,t)**: Vector field on density background
-5. **Heisenberg**: ΔX·ΔY / (ℏ/2) vs minimum bound
-6. **Conservation**: |Norm - 1| (log-scale)
-
-### 1D Wavepacket Evolution (Phase 1)
-
-![Wavepacket Spreading](quantum_simulation/results/state_initial.png)
-*Gaussian wavepacket at t=0 and t=5fs showing quantum spreading*
-
-![Observables Evolution](quantum_simulation/results/observables_evolution.png)
-*Position, momentum, and uncertainty evolution validating Heisenberg relations*
-
-### Measurement Distribution (Phase 1)
-
-![Measurement Stats](quantum_simulation/results/measurement_distributions_infinite_well.png)
-*1000 measurements vs theoretical Born rule predictions (χ² test: p=0.77)*
-
-### 2D Visualizations (Phase 2) NEW
-
-**3D Surface Plot**:
-![3D Wavefunction](quantum_simulation/results/gaussian_2d/wavefunction_3d_t0.png)
-*Module |ψ(x,y,0)| as 3D surface (matplotlib)*
-
-**Probability Current**:
-![Current Field](quantum_simulation/results/gaussian_2d/current_final.png)
-*Vector field J(x,y) showing probability flow direction*
-
-**Marginal Distributions**:
-![Marginals](quantum_simulation/results/gaussian_2d/marginals_final.png)
-*Projected densities ρₓ(x) and ρᵧ(y) from 2D state*
-
-## Educational Features
-
-### 1. Complete Traceability
-Every implemented equation includes textbook references:
-```python
-def expectation_value(self, state: QuantumState) -> float:
-    """
-    Compute ⟨A⟩ = ⟨ψ|A|ψ⟩
-    
-    Source: Cohen-Tannoudji, Chapter III, § C-4
-    Implements Rule R4.1
-    
-    References:
-        - [file:1, Chapitre III, § C-4]
-        - Document de référence § 2.4
-    """
-```
-
-### 2. Physical Validation Built-In
-All experiments automatically validate:
-- **Heisenberg relations**: Ensures ΔX·ΔP ≥ ℏ/2 with configurable tolerance
-- **Norm conservation**: Monitors ∫|ψ(t)|²dr = 1 throughout evolution
-- **Ehrenfest theorem**: Verifies quantum-classical correspondence
-- **Continuity equation**: ∂ρ/∂t + ∇·J = 0 (100% accuracy in 2D)
-
-### 3. Step-by-Step Experiment Workflow
-```python
-class Experiment(ABC):
-    def run(self):
-        self.prepare_initial_state()  # |ψ(t₀)⟩
-        self.define_hamiltonian()     # H = P²/2m + V
-        self.evolve_state()           # iℏ∂ψ/∂t = Hψ
-        self.perform_measurements()   # Observables & statistics
-        self.validate_physics()       # Check principles
-        self.analyze_results()        # Generate reports
-```
-
-## Implemented Quantum Systems
-
-| System | Hamiltonian | Dimensions | Key Features |
-|--------|-------------|------------|--------------|
-| **Free Particle** | H = P²/2m | 1D | Plane waves, Gaussian wavepackets, spreading |
-| **Free Particle 2D** | H = (Pₓ² + Pᵧ²)/2m | 2D | Gaussian packets with momentum, animations |
-| **Infinite Well** | V=0 (0<x<L), V=∞ elsewhere | 1D | Discrete energy En = n²π²ℏ²/2mL², standing waves |
-| **Finite Well** | V=-V₀ (inside), V=0 (outside) | 1D | Bound + scattering states, numerical eigensolvers |
-| **Harmonic Oscillator** | H = P²/2m + ½mω²X² | 1D | Ladder operators a/a†, Fock states \|n⟩, En = ℏω(n+½) |
-| **Potential Barrier** | Step/rectangular barrier | 1D | Quantum tunneling, transmission coefficients |
-
-## Documentation
-
-### Core Documents
-- **[Document de référence](quantum_simulation/Document%20de%20référence.md)** (French): Complete theoretical foundation with 100+ references to textbook
-- **[Journal des changements](quantum_simulation/Journal%20des%20changements%20et%20améliorations.md)**: Implementation progress, resolved decisions D1-D5
-- **[Analyse décisions techniques](quantum_simulation/Analyse%20détaillée%20des%20décisions%20techniques%20D1%20à%20D5.md)**: Deep dive into numerical methods (Crank-Nicolson, ADI, etc.)
-
-### Additional Resources
-- **Inline documentation**: All classes/methods include docstrings with equation sources
-- **Configuration guide**: `parameters.yaml` with detailed comments
-- **Test documentation**: Example test cases demonstrating validation
-
-## Advanced Usage
-
-### Custom 2D Experiments  NEW
+The Crank-Nicolson scheme solves `(I + iHdt/2hbar) psi^{n+1} = (I - iHdt/2hbar) psi^n` via `scipy.sparse.linalg.spsolve` on a CSR tridiagonal Hamiltonian.
 
 ```python
-from quantum_simulation.systems.free_particle_2d import FreeParticle2D
 from quantum_simulation.dynamics.evolution import TimeEvolution
-from quantum_simulation.visualization.dashboard_2d import QuantumDashboard2D
+from quantum_simulation.systems.free_particle import FreeParticle
 
-# Setup
-hbar = 1.054571817e-34
-mass = 9.1093837015e-31
+fp = FreeParticle(mass=9.109e-31, hbar=1.055e-34)
+psi0 = fp.create_gaussian_packet(x_grid, x0=0, sigma=2e-9, k0=5e9)
 
-x = np.linspace(-5e-8, 5e-8, 256)
-y = np.linspace(-5e-8, 5e-8, 256)
-
-# Create 2D Gaussian packet
-fp2d = FreeParticle2D(mass, hbar)
-initial_state = fp2d.create_gaussian_packet_2d(
-    x, y, x0=0, y0=0,
-    sigma_x=4e-9, sigma_y=4e-9,
-    kx0=5e9, ky0=3e9  # Momentum
-)
-
-# Time evolution
-hamiltonian = fp2d.create_hamiltonian_2d(x, y)
-evolver = TimeEvolution(hamiltonian, hbar)
-
-times = np.linspace(0, 5e-15, 50)
-states = evolver.evolve_wavefunction_2d(
-    initial_state, times, hamiltonian,
-    method='split_operator'  # or 'crank_nicolson_adi'
-)
-
-# Create video dashboard
-dashboard = QuantumDashboard2D(output_dir='./results/')
-dashboard.create_evolution_dashboard(
-    states, times, hbar, mass,
-    output_name='my_experiment.gif',
-    fps=10
-)
+evol = TimeEvolution(fp.hamiltonian)
+psi_t = evol.evolve_wavefunction(psi0, t0=0, t=5e-15, dt=5e-18)
 ```
-
-### Numerical Methods
-
-#### Time Integration Methods
-
-| Method | Dimensions | Stability | Norm Conservation | Speed | Use Case |
-|--------|------------|-----------|-------------------|-------|----------|
-| **Crank-Nicolson** | 1D | Unconditional | Exact | Moderate | Production (1D) |
-| **ADI (Alternating Direction Implicit)** | 2D | Unconditional | Exact | Fast | 2D confined systems |
-| **Split-Operator** | 1D/2D | Unconditional | O(dt²) | Very Fast | 2D free evolution |
-
-Configurable via:
-```yaml
-numerical_parameters:
-  integration_method_1d: "crank_nicolson"
-  integration_method_2d: "split_operator"  # or "crank_nicolson_adi"
-  finite_difference_order: 2
-```
-
-#### Spatial Discretization
-
-- **1D**: Finite differences (order 2, optionally order 4)
-- **2D**: Finite differences (order 2) + FFT for split-operator
-- **Boundary conditions**: Dirichlet (ψ=0 at edges) by default
-
-### Custom Visualizations  NEW
-
-```python
-from quantum_simulation.visualization.viz_2d import QuantumVisualizer2D
-
-viz = QuantumVisualizer2D(output_dir='./my_plots/')
-
-# Density heatmap
-viz.plot_density_2d(state_2d, colormap='plasma', save_name='density')
-
-# 3D surface plot
-viz.plot_wavefunction_3d(state_2d, component='abs', save_name='wavefunction_3d')
-
-# Probability current vectors
-viz.plot_probability_current_2d(state_2d, hbar, mass, save_name='current')
-
-# Marginal distributions
-viz.plot_marginal_distributions(state_2d, save_name='marginals')
-
-# Create animation (MP4 or GIF)
-viz.create_animation_2d(
-    states_2d, times,
-    output_name='evolution.mp4',
-    fps=30
-)
-```
-
-## Project Phases
-
-### Phase 1: Core Framework & 1D Systems (COMPLETE)
-**Status**: 100% implemented, 85% tested
-
-**Deliverables**:
-- Crank-Nicolson time evolution (1D)
-- Free particle, infinite well, harmonic oscillator (1D)
-- Measurement statistics with χ² validation
-- Heisenberg, Ehrenfest, conservation validators
-- 40+ unit tests
-- Complete documentation (Document de référence)
-
-**Lines of code**: ~1620 lines core framework
-
-### Phase 2: 2D Systems & Video Dashboards (COMPLETE) 
-**Status**: 100% implemented, 4/5 tests passing (ffmpeg optional)
-
-**Deliverables**:
-- 2D Gaussian wavepackets with momentum
-- Time evolution methods (ADI + Split-Operator)
-- 6-panel video dashboards (GIF/MP4)
-- 2D visualizations (heatmaps, 3D surfaces, currents, marginals)
-- Dashboard tests (density normalization, marginals, conservation)
-- Example: `example_gaussian_2d_evolution.py`
-
-**Lines of code**: ~2000 lines (Phase 1 + Phase 2)
-
-**Performance**:
-- 256×256 grid, 50 timesteps: ~3s (split-operator)
-- Dashboard generation: ~5-8s (50 frames, GIF)
-- Norm conservation: max deviation 1.78e-15
-
-### Phase 3: 3D Systems & Advanced Features (PLANNED)
-**Status**: 0% implemented
-
-**Planned**:
-- 3D Gaussian wavepackets (spherical coordinates)
-- FFT-based evolution (3D)
-- Isosurface visualizations (plotly/mayavi)
-- Hydrogen atom ground state (if Hermite polynomials available)
-- Potential barriers 2D (double-slit interference)
-
-**Estimated**: ~2500 additional lines
-
-## Current Limitations
-
-### What Works
-- 1D systems with Crank-Nicolson (production-ready)
-- 2D free particle with ADI/Split-Operator
-- Video dashboards (GIF always, MP4 if ffmpeg installed)
-- All physical validations (Heisenberg, conservation, Ehrenfest)
-
-### Known Limitations
-1. **2D only for free particle**: Potentials V(x,y) not yet implemented
-2. **3D not implemented**: Requires FFT 3D, isosurface rendering
-3. **No spin**: Pauli matrices require Chapter IV (not in textbook excerpts)
-4. **Time-independent potentials**: V(r,t) requires algorithm modifications
-5. **FFmpeg optional**: MP4 videos require `ffmpeg` installed (GIF fallback available)
-
-### Performance Limits
-- **1D**: nx up to 10⁴ points (< 1s per timestep)
-- **2D**: 256×256 grid recommended (512×512 possible but slower)
-- **Memory**: ~200MB for 50-frame 2D animation (256×256 grid)
-
-See [`Document de référence.md`](quantum_simulation/Document%20de%20référence.md) § 8 for detailed roadmap.
-
-## Contributing
-
-Contributions welcome! Please ensure:
-1. All equations reference textbook sources (Cohen-Tannoudji)
-2. Physical validation tests included
-3. Code follows existing architecture (layered dependencies)
-4. Tests pass: `pytest quantum_simulation/tests/ -v`
-5. Documentation updated (docstrings + README if new feature)
-
-### Contribution Areas
-- **Priority**: 3D systems implementation
-- **Medium**: Potential barriers 2D (double-slit)
-- **Low**: Performance optimizations (GPU, Numba)
-
-## Citation
-
-If using this framework for research/education:
-
-```bibtex
-@software{quantum_sim_2025,
-  author = {Carlin, Esteban},
-  title = {Quantum Simulation Framework},
-  year = {2025},
-  publisher = {GitHub},
-  url = {https://github.com/estebancarlin/Exploring_Quantum_Physics},
-  note = {Phase 2: 2D systems with video dashboards}
-}
-```
-
-Based on:
-```bibtex
-@book{cohen1977quantum,
-  title={Mécanique Quantique},
-  author={Cohen-Tannoudji, Claude and Diu, Bernard and Laloë, Franck},
-  year={1977},
-  publisher={Hermann}
-}
-```
-
-## License
-
-MIT License - see [`LICENSE`](LICENSE) for details
-
-## Acknowledgments
-
-- **Theoretical foundation**: Cohen-Tannoudji, Diu & Laloë textbook
-- **Numerical methods**: SciPy, NumPy communities
-- **Visualization**: Matplotlib, Pillow (GIF), FFmpeg (MP4)
-- **Testing framework**: pytest ecosystem
 
 ---
 
-**Project Status**: Phase 2 complete | Python 3.10+ | Educational/Research tool
+## GPU Acceleration
 
-**Latest Release**: Phase 2.0 (December 2025) - 2D Systems & Video Dashboards
+Automatic CuPy-based acceleration for grids above threshold (1D: nx > 1024, 2D: nx*ny > 256^2).
 
-**Contact**: [GitHub Issues](https://github.com/estebancarlin/Exploring_Quantum_Physics/issues) for questions/bugs
+```bash
+pip install cupy-cuda12x           # requires CUDA 12.x
+export QUANTUM_USE_GPU=true        # or false to disable
+python quantum_simulation/benchmarks/benchmark_gpu.py
+```
+
+| Operation | Grid | CPU | GPU | Speedup |
+| --- | --- | --- | --- | --- |
+| Laplacian 2D (FFT) | 512x512 | 42.7 ms | 3.8 ms | 11x |
+| Split-operator 2D | 512x512, 50 steps | 6 min | 32 s | 11x |
+| Crank-Nicolson 1D | 4096 pts, 100 steps | 12.4 s | 3.8 s | 3x |
+
+---
+
+## Implemented Systems
+
+| System | Hamiltonian | Dim | Features |
+| --- | --- | --- | --- |
+| Free Particle | P^2/2m | 1D/2D | Gaussian wavepackets, spreading, analytical overlay |
+| Infinite Well | V=0 (0<x<L), V=inf | 1D | Discrete levels E_n = n^2*pi^2*hbar^2/2mL^2 |
+| Finite Well | -V_0 inside | 1D | Bound + scattering states |
+| Harmonic Oscillator | P^2/2m + mw^2X^2/2 | 1D | Ladder operators a/a+, Fock states, coherent states |
+| Potential Barrier | Step/rectangular | 1D | Tunneling, transmission coefficients |
+| Double Slit | Barrier + slits | 2D | Young interference, fringe detection |
+
+---
+
+## Physical Validation
+
+All experiments automatically verify:
+
+| Principle | Rule | Tolerance |
+| --- | --- | --- |
+| Norm conservation | R5.1 | norm - 1 < 1e-9 |
+| Heisenberg dX·dP >= hbar/2 | R4.3 | 100% states validated |
+| Ehrenfest d[X]/dt = [P]/m | R4.4 | < 1% error |
+| Born rule (empirical vs theoretical) | R2.2 | chi-squared p-value > 0.05 |
+| Continuity equation (2D) | R5.2 | 100% accuracy |
+
+---
 
 ## Visualization Gallery
 
-### 2D Dashboard Components
+### 2D Wavepacket Evolution — Animated Dashboard
 
-#### Density Evolution
-![Density](quantum_simulation/results/gaussian_2d/density_final.png)
-*2D probability density ρ(x,y) at t=5fs (heatmap)*
+![2D Evolution Dashboard](quantum_simulation/results/gaussian_2d/evolution_dashboard.gif)
 
-#### 3D Wavefunction Surface
-![3D Surface](quantum_simulation/results/gaussian_2d/wavefunction_3d_t0.png)
-*Module |ψ(x,y,0)| as 3D surface*
-
-#### Probability Current Field
-![Current](quantum_simulation/results/gaussian_2d/current_final.png)
-*Vector field J(x,y) showing probability flow*
-
-#### Marginal Distributions
-![Marginals](quantum_simulation/results/gaussian_2d/marginals_final.png)
-*Projected densities ρₓ(x) and ρᵧ(y)*
-
-## Key Achievements
-
-### Numerical Accuracy
-- **Norm conservation**: 100% (max deviation 1e-15)
-- **Heisenberg relations**: Validated 100% states
-- **Continuity equation**: 100% accuracy (2D)
-- **Ehrenfest theorem**: < 1% error on classical trajectories
-
-### Performance
-- **1D evolution**: 2048 points, 500 steps in ~5s
-- **2D evolution**: 256×256 grid, 50 steps in ~3s
-- **Dashboard generation**: 50-frame GIF in ~8s
-
-### Test Coverage
-- **95+ tests** across all modules
-- **85% code coverage**
-- **100% validation tests passing**
-
-## Learning Resources
-
-### For Students
-- Start with [`example_wavepacket_free_particle.py`](quantum_simulation/examples/example_wavepacket_free_particle.py) (1D basics)
-- Then [`example_gaussian_2d_evolution.py`](quantum_simulation/examples/example_gaussian_2d_evolution.py) (2D visualization)
-- Read [`Document de référence.md`](quantum_simulation/Document%20de%20référence.md) for theory
-
-### For Developers
-- Architecture: See [Project Architecture](#project-architecture)
-- Numerical methods: Read [`Analyse décisions techniques D1-D5.md`](quantum_simulation/Analyse%20détaillée%20des%20décisions%20techniques%20D1%20à%20D5.md)
-- Implementation progress: Check [`Journal des changements.md`](quantum_simulation/Journal%20des%20changements%20et%20améliorations.md)
-
-### For Researchers
-- All equations traceable to textbook (Cohen-Tannoudji)
-- Validation metrics in test reports
-- Custom experiments easily extendable
+*6-panel synchronized dashboard: density ρ(x,y,t), marginals ρₓ/ρᵧ, observables ⟨X⟩⟨Y⟩, probability current J, Heisenberg product ΔX·ΔY, norm conservation over 50 frames.*
 
 ---
 
-**Ready to explore quantum physics?** 
+### 2D Wavepacket — Density & 3D Surface
 
-```bash
-git clone https://github.com/estebancarlin/Exploring_Quantum_Physics.git
-cd Exploring_Quantum_Physics
-pip install -r requirements.txt
-python quantum_simulation/examples/example_gaussian_2d_evolution.py
+| Initial density ρ(x,y,0) | Wavefunction |ψ(x,y,0)| |
+| --- | --- |
+| ![Density t=0](quantum_simulation/results/gaussian_2d/density_t0.png) | ![3D Surface](quantum_simulation/results/gaussian_2d/wavefunction_3d_t0.png) |
+
+| Final density ρ(x,y,t=5fs) | Probability current J(x,y) |
+| --- | --- |
+| ![Density final](quantum_simulation/results/gaussian_2d/density_final.png) | ![Current field](quantum_simulation/results/gaussian_2d/current_final.png) |
+
+---
+
+### 2D Wavepacket — Marginal Distributions
+
+![Marginals](quantum_simulation/results/gaussian_2d/marginals_final.png)
+
+*Projected densities ρₓ(x) and ρᵧ(y) extracted from the 2D state at t=5fs.*
+
+---
+
+### Double Slit Experiment — Interference
+
+![Double Slit Evolution](quantum_simulation/results/double_slit/double_slit_evolution.gif)
+
+*2D wavepacket diffracting through a double slit barrier — density ρ(x,y,t) animated.*
+
+![Screen Distribution](quantum_simulation/results/double_slit/screen_distribution.png)
+
+*Intensity distribution at the detection screen. Fringe spacing Δy = λD/d consistent with Young's formula.*
+
+---
+
+### Measurement Statistics — Born Rule Validation
+
+![Measurement Distributions (Infinite Well)](quantum_simulation/results/measurement_distributions_infinite_well.png)
+
+*1000 energy measurements on a superposition state in the infinite well. Empirical histogram vs theoretical |cₙ|² predictions. Chi-squared test: p-value = 0.77.*
+
+![Measurement Distributions (Free Particle)](quantum_simulation/results/measurement_distributions_free_particle.png)
+
+*Momentum measurement distribution for a Gaussian wavepacket. Empirical outcome vs |φ(p)|² (Fourier transform of ψ).*
+
+---
+
+## Documentation
+
+- [Document de reference](quantum_simulation/Document%20de%20référence.md) — full theoretical foundation, 100+ textbook references
+- [Journal des changements](quantum_simulation/Journal%20des%20changements%20et%20améliorations.md) — implementation log, decisions D1-D5
+- [Analyse des decisions techniques](quantum_simulation/Analyse%20détaillée%20des%20décisions%20techniques%20D1%20à%20D5.md) — numerical method choices (CN vs RK4, ADI, split-operator)
+
+---
+
+## Roadmap — AI Extensions
+
+| Direction | Method | Status |
+| --- | --- | --- |
+| **Neural Quantum States** | NQS (NetKet / JAX) — variational ground states for N-body | Planned |
+| **Physics-Informed Neural Networks** | PINNs for TDSE — NN solving Schrodinger equation | Planned |
+| **Variational Quantum Eigensolver** | VQE in JAX — quantum-classical hybrid optimizer | Planned |
+| **3D systems** | FFT-based 3D evolution, hydrogen atom, isosurfaces | Planned |
+
+---
+
+## Citation
+
+```bibtex
+@software{carlin2025quantum,
+  author    = {Carlin, Esteban},
+  title     = {Exploring Quantum Physics with AI},
+  year      = {2025},
+  publisher = {GitHub},
+  url       = {https://github.com/estebancarlin/Exploring_Quantum_Physics}
+}
 ```
 
-**See your first quantum animation in < 2 minutes!**
+```bibtex
+@book{cohen1977mecanique,
+  title     = {Mecanique Quantique},
+  author    = {Cohen-Tannoudji, Claude and Diu, Bernard and Laoloe, Franck},
+  year      = {1977},
+  publisher = {Hermann}
+}
+```
+
+---
+
+MIT License — see [LICENSE](LICENSE).

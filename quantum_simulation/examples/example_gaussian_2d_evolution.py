@@ -69,7 +69,7 @@ def main():
     print("[4/6] Évolution temporelle...")
     times = np.linspace(0, 5e-14, 500)
     
-    evolver = TimeEvolution(hamiltonian, hbar)
+    evolver = TimeEvolution(hamiltonian)
     method = 'split_operator'
     print(f"  Méthode: {method}")
     print(f"  Temps: {times[0]:.2e} → {times[-1]:.2e} s ({len(times)} pas)")
