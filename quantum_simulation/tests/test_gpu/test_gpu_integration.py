@@ -238,7 +238,7 @@ def test_crank_nicolson_cpu_gpu_equivalence():
     H.dimension = 1
     H.potential = lambda x: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     # Paramètres évolution
     t0 = 0.0
@@ -296,7 +296,7 @@ def test_gpu_norm_conservation():
     H.dimension = 1
     H.potential = lambda x: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     # Évolution GPU
     t0 = 0.0
@@ -347,7 +347,7 @@ def test_gpu_heisenberg_relations():
     H.dimension = 1
     H.potential = lambda x: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     # Évolution GPU
     t_final = 2e-15
@@ -390,7 +390,7 @@ def test_gpu_observables_accuracy():
     H.dimension = 1
     H.potential = lambda x: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     # Évolution courte (position devrait rester ~x0)
     t_final = 5e-17
@@ -465,7 +465,7 @@ def test_gpu_fallback_to_cpu():
     H.dimension = 1
     H.potential = lambda x: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     # Forcer erreur GPU (si possible) via grille trop grande
     # Sinon, vérifier que code ne plante pas
@@ -594,7 +594,7 @@ def test_gpu_speedup_crank_nicolson():
     H.dimension = 1
     H.potential = lambda x: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     t0_time = 0.0
     t_final = 5e-15

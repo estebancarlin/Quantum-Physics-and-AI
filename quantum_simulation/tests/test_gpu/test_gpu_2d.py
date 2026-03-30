@@ -36,7 +36,7 @@ def test_split_operator_2d_cpu_gpu_equivalence():
     H.dimension = 2
     H.potential = lambda x, y: 0.0  # Particule libre
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     times = np.linspace(0, 1e-15, 10)
     
@@ -88,7 +88,7 @@ def test_split_operator_2d_norm_conservation():
     H.dimension = 2
     H.potential = lambda x, y: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     times = np.linspace(0, 5e-15, 50)
     
@@ -137,7 +137,7 @@ def test_split_operator_2d_speedup():
     H.dimension = 2
     H.potential = lambda x, y: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     times = np.linspace(0, 5e-15, 50)  # 50 pas
     
@@ -205,7 +205,7 @@ def test_dashboard_2d_gpu():
     H.dimension = 2
     H.potential = lambda x, y: 0.0
     
-    evolver = TimeEvolution(H, hbar)
+    evolver = TimeEvolution(H)
     
     times = np.linspace(0, 1e-15, 10)
     

@@ -38,7 +38,7 @@ def test_hamiltonian_hermiticity():
     def potential(x):
         return 0.5 * mass * (1e15)**2 * x**2  # Oscillateur harmonique
     
-    H = Hamiltonian(mass, potential, hbar)
+    H = Hamiltonian(mass, hbar, potential)
     
     # Deux états différents
     free_particle = FreeParticle(mass, hbar)
@@ -257,7 +257,7 @@ def test_hamiltonian_free_particle_eigenvalue():
     def potential(x):
         return np.zeros_like(x)
     
-    H = Hamiltonian(mass, potential, hbar)
+    H = Hamiltonian(mass, hbar, potential)
     
     # Onde plane (approximation sur grille finie)
     free_particle = FreeParticle(mass, hbar)

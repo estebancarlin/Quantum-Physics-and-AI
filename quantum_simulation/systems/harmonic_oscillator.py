@@ -8,6 +8,7 @@ Sources théoriques :
 - Document de référence, Section 1.2.3, lignes 259-292
 """
 
+import math
 import numpy as np
 from typing import Optional
 from quantum_simulation.core.state import WaveFunctionState
@@ -274,7 +275,7 @@ class HarmonicOscillator:
         prefactor = np.exp(-0.5 * np.abs(alpha)**2)
         
         for n in range(dim):
-            state[n] = prefactor * (alpha**n) / np.sqrt(np.math.factorial(n))
+            state[n] = prefactor * (alpha**n) / math.sqrt(math.factorial(n))
         
         # Renormalisation (compenser troncature)
         norm = np.linalg.norm(state)
@@ -372,7 +373,7 @@ class HarmonicOscillator:
         
         # Normalisation
         norm_factor = (self.mass * self.omega / (np.pi * self.hbar))**0.25
-        norm_factor /= np.sqrt(2**n * factorial(n))
+        norm_factor /= math.sqrt(2**n * factorial(n))
         
         # Polynôme Hermite (physicien) + gaussienne
         Hn = eval_hermite(n, xi)

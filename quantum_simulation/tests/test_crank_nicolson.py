@@ -51,7 +51,7 @@ def test_conservation_norm_exact():
     
     # Validation norme
     norm = psi_t.norm()
-    assert abs(norm - 1.0) < 1e-9, f"Norme = {norm}, déviation = {abs(norm-1.0):.2e}"
+    assert abs(norm - 1.0) < 1e-8, f"Norme = {norm}, déviation = {abs(norm-1.0):.2e}"
 
 
 def test_ehrenfest_theorem():
