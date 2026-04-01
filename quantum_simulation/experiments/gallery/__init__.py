@@ -9,9 +9,15 @@ Catalogue expériences démonstratives :
 """
 
 from .double_slit_2d import DoubleSlitExperiment
+from .scattering_yukawa import ScatteringYukawa
+from .rabi_oscillations import RabiOscillationsExperiment
+from .hydrogen_fine_structure import HydrogenFineStructureExperiment
 
 __all__ = [
+    # Tome 1
     'DoubleSlitExperiment',
-    # 'QuantumBilliard2D',  # À implémenter
-    # 'VortexStates2D',      # À implémenter
+    # Tome 2
+    'ScatteringYukawa',
+    'RabiOscillationsExperiment',
+    'HydrogenFineStructureExperiment',
 ]

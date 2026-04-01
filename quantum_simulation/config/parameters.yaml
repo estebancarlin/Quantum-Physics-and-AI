@@ -147,6 +147,26 @@ experiments:
     observables: ["position", "momentum"]
     test_states: []                    # Liste d'états à tester
 
+  # --- Expériences Tome 2 ---
+  scattering_yukawa:
+    V0: 1.6e-28                   # Couplage Yukawa (J·m) : V₀=1 eV·Å → V(a)≈3.7 eV
+    range_a: 1.0e-10              # Portée (m) ~ a₀
+    energy: 1.6e-19               # Énergie incidente (~1 eV en J)
+    l_max: 5                      # Ordre max ondes partielles
+    n_theta: 300                  # Points grille angulaire
+
+  rabi_oscillations:
+    transition_frequency: 1.0e+10  # ω₀ (rad/s)
+    rabi_frequency: 1.0e+9         # Ω_R (rad/s)
+    detunings: [0.0, 5.0e+8, 1.0e+9]  # Désaccords δ (rad/s)
+    t_final_factor: 10             # t_final = factor × T_π
+    n_points: 500
+
+  hydrogen_fine_structure:
+    n: 2                          # Nombre quantique principal
+    B_max: 1.0                    # Champ Zeeman max (T)
+    n_B_points: 200               # Points balayage en B
+
   double_slit_2d:
     # CORRECTION ÉCHELLES PHYSIQUES
     slit_separation: 1.0e-8      # d = 10 nm
@@ -163,6 +183,60 @@ experiments:
       sigma_y: 1.5e-9            # 1.5 nm (cohérence OK)
       momentum_x: 5.0e-23        # 5e-24 kg·m/s (÷4)
 
+
+
+# ============================================================
+# SPIN (Chapitre IX — Tome 2)
+# ============================================================
+spin:
+  g_electron: 2.0023193043        # Facteur g anomal de l'électron
+  mu_B: 9.2740100783e-24          # Magnéton de Bohr (J/T)
+  tolerance_pauli: 1.0e-12        # Tolérance {σi,σj} = 2δI
+
+# ============================================================
+# COUPLAGE DE MOMENTS ANGULAIRES (Chapitre X — Tome 2)
+# ============================================================
+angular_momentum:
+  j_max: 5.0                      # j max pour précalcul tables CG
+  cg_tolerance: 1.0e-10           # Tolérance vérification unitarité CG
+  use_sympy_cg: true              # Utiliser sympy si disponible (fallback récursif)
+
+# ============================================================
+# DIFFUSION ÉLASTIQUE (Chapitre VIII — Tome 2)
+# ============================================================
+scattering:
+  r_min: 1.0e-15                  # Borne inférieure intégration radiale (m)
+  r_max_factor: 30.0              # r_max = r_max_factor × portée potentiel
+  n_radial: 2000                  # Points grille radiale
+  l_max: 8                        # Ordre maximal ondes partielles
+  n_theta: 500                    # Points grille angulaire pour σ(θ)
+  convergence_threshold: 1.0e-6   # Seuil convergence |δl|
+  optical_theorem_tolerance: 1.0e-4  # Tolérance relative théorème optique
+
+# ============================================================
+# THÉORIE DES PERTURBATIONS STATIONNAIRES (Chapitre XI — Tome 2)
+# ============================================================
+perturbation:
+  n_states: 50                    # États dans la somme au 2ème ordre
+  degeneracy_threshold: 1.0e-10   # Seuil dégénérescence |En - Ep|
+  perturbative_ratio_max: 0.1     # Max |Wnp|/|En-Ep| pour validité
+  variational_method: "Nelder-Mead"
+  variational_max_iter: 1000
+
+# ============================================================
+# PERTURBATIONS DÉPENDANTES DU TEMPS (Chapitre XIII — Tome 2)
+# ============================================================
+time_dependent:
+  n_integration_points: 1000      # Points intégration numérique c_f(t)
+  rk45_rtol: 1.0e-8               # Tolérance relative scipy solve_ivp
+  rk45_atol: 1.0e-10              # Tolérance absolue scipy solve_ivp
+  linear_regime_threshold: 0.1   # Seuil Γ·t ≪ 1
+
+# ============================================================
+# PARTICULES IDENTIQUES (Chapitre XIV — Tome 2)
+# ============================================================
+identical_particles:
+  orthonormality_tolerance: 1.0e-10  # Tolérance ⟨φi|φj⟩ = δij
 
 # ============================================================
 # VISUALISATION

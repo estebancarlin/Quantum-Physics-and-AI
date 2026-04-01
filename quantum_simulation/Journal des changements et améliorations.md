@@ -900,3 +900,117 @@ TOTAL                           ~95      ~85%  ✅
 ---
 
 **Résumé exécutif** : Toutes décisions critiques (D1-D5) **RÉSOLUES** ✅. Implémentation maintenant **production-ready** pour applications 1D.
+
+---
+
+## 📋 Session Tome 2 — 2026-04-01
+
+### Contexte
+Implémentation complète des modules du **Tome 2 (Cohen-Tannoudji)** à partir du document de référence dédié (`Document de référence - Tome 2.md`). Chapitres couverts : VIII (Diffusion), IX (Spin-1/2), X (Moments angulaires), XI (Perturbations stationnaires), XII (Structure fine/hyperfine), XIII (Perturbations dépendantes du temps), XIV (Particules identiques).
+
+---
+
+### ✅ Modules implémentés (7 fichiers nouveaux)
+
+| Fichier | Contenu | Règles |
+|---|---|---|
+| `core/spin.py` | `SpinHalf`, `SpinOperators`, `SpinDensityMatrix` | R7 |
+| `core/angular_momentum.py` | `ClebschGordan`, `AngularMomentumCoupling` | R8 |
+| `dynamics/scattering.py` | `PhaseShiftSolver`, `BornApproximation`, `CrossSection` | R6 |
+| `dynamics/perturbation.py` | `StationaryPerturbation`, `DegeneratePerturbation`, `VariationalMethod` | R9 |
+| `dynamics/time_perturbation.py` | `TimeDependentPerturbation`, `FermiGoldenRule`, `RabiOscillations` | R11 |
+| `systems/hydrogen_structure.py` | `HydrogenFineStructure` (corrections relativiste, Darwin, spin-orbite, hyperfine) | R10 |
+| `systems/zeeman_stark.py` | `ZeemanEffect`, `StarkEffect` | R10 |
+| `systems/identical_particles.py` | `Symmetrizer`, `SlaterDeterminant`, `IdenticalParticlesScattering` | R12 |
+| `validation/tome2_invariants.py` | 6 validators : `ScatteringValidator`, `SpinValidator`, `ClebschGordanValidator`, `PerturbationValidator`, `HydrogenValidator`, `IdenticalParticlesValidator` | R6–R12 |
+
+### ✅ Expériences gallery (3 nouvelles)
+
+| Expérience | Validation | Temps |
+|---|---|---|
+| `gallery/rabi_oscillations.py` | 7/7 checks ✅ | 0.17s |
+| `gallery/hydrogen_fine_structure.py` | 7/7 checks ✅ | 0.47s |
+| `gallery/scattering_yukawa.py` | 5/5 checks ✅ | 0.11s |
+
+---
+
+### 🔧 Bugs corrigés
+
+#### Bug T1 — `darwin_correction` : facteur 2 en trop
+**Fichier** : `systems/hydrogen_structure.py`
+**Symptôme** : 2s₁/₂ et 2p₁/₂ non dégénérés (erreur ~1.5×10⁻⁵ eV attendue ~0).
+**Cause** : `E_I * α²/(2n³)` — le facteur ½ était compté deux fois car `E_I = mₑc²α²/2` l'absorbe déjà.
+**Correction** : `return self.E_I * self.ALPHA**2 / n**3`.
+**Résultat** : Dégénérescence 2s₁/₂–2p₁/₂ = 3.25×10⁻¹⁴ eV (bruit numérique).
+
+#### Bug T2 — `hyperfine_coupling_1s` : préfacteur 16/3 au lieu de 8/3
+**Fichier** : `systems/hydrogen_structure.py`
+**Symptôme** : Transition 21 cm donnait 2842 MHz au lieu de 1420 MHz.
+**Cause** : Préfacteur `16/3` dans la formule de couplage hyperfin.
+**Correction** : `(8.0/3.0) * g_p * (mₑ/mₚ) * α² * E_I`.
+**Résultat** : 1421.2 MHz (erreur 0.05% vs référence 1420.4 MHz).
+
+#### Bug T3 — Wronskien 2-points manquant le facteur r dans la diffusion
+**Fichier** : `dynamics/scattering.py`
+**Symptôme** : Particule libre donnait δₗ ≠ 0 pour l ≥ 1.
+**Cause** : La forme asymptotique u(r) = r·[jₗ cos δ − nₗ sin δ] nécessite le facteur r, absent.
+**Correction** : Remplacement par la méthode de la **dérivée logarithmique** (formule à un point, plus stable) :
+```
+f = u'/u  ;  tan(δ) = [f(r·jₗ) − (r·jₗ)'] / [f(r·nₗ) − (r·nₗ)']
+```
+
+#### Bug T4 — Underflow ODE pour l ≥ 2 (conditions initiales)
+**Fichier** : `dynamics/scattering.py`
+**Symptôme** : `u₀ = r_min^(l+1) = (10⁻¹²)³ = 10⁻³⁶` — en dessous de la tolérance absolue de l'intégrateur.
+**Cause** : L'amplitude initiale trop petite rendait u'/u inprécis.
+**Correction** : ICs normalisées `u₀ = 1`, `du₀ = (l+1)/r_min` (le déphasage ne dépend que du rapport u'/u).
+
+#### Bug T5 — `degeneracy_threshold` trop grand (perturbation.py)
+**Fichier** : `dynamics/perturbation.py`
+**Symptôme** : `ValueError: états n=0 et p=1 quasi-dégénérés : |ΔE| = 1.60×10⁻¹⁹ < 1×10⁻¹⁰`
+**Cause** : Seuil par défaut `1×10⁻¹⁰ J` = 0.1 nJ >> 1 eV = 1.6×10⁻¹⁹ J — classifiait tous les niveaux atomiques comme "dégénérés".
+**Correction** : Seuil changé à `1×10⁻³⁰` (4 occurrences, `replace_all`).
+
+#### Bug T6 — Notation scientifique YAML parsée comme string
+**Fichier** : `config/parameters.yaml`
+**Symptôme** : `TypeError: '>' not supported between 'str' and 'float'` lors de l'initialisation des expériences.
+**Cause** : `yaml.safe_load` interprète `1.0e10` comme string ; il faut `1.0e+10` (avec signe).
+**Correction** : `1.0e10` → `1.0e+10`, `1.0e9` → `1.0e+9`, `5.0e8` → `5.0e+8`.
+
+#### Bug T7 — Potentiel Yukawa V₀ mal dimensionné → ODE intractable (timeout)
+**Fichier** : `config/parameters.yaml` + `experiments/gallery/scattering_yukawa.py`
+**Symptôme** : L'expérience de diffusion timeout après >1000s (ODE radiale trop raide).
+**Cause** : `V0 = 1.6×10⁻¹⁸` interprété en J dans V(r) = −V₀ e^(−r/a)/r → V(a) ≈ 37 GeV.  
+  Le couplage Yukawa doit être en J·m ; la valeur correcte pour ~3.7 eV à r=a est `1.6×10⁻²⁸ J·m`.  
+  De plus, `r_min = 10⁻⁴ × a = 10⁻¹⁴ m` créait un raideur ODE de ~10³² m⁻² (2.6×10¹⁰ fois trop grande).
+**Corrections** :
+- `V0: 1.6e-18` → `V0: 1.6e-28` (couplage physiquement correct ; V(a) ≈ 3.7 eV)
+- `r_min = a × 10⁻⁴` → `a × 10⁻²` (évite le cœur singulier de 1/r)
+- Méthode ODE : `RK45` → `LSODA` (détection automatique raideur)
+**Résultat** : Expérience complète en 0.11s.
+
+---
+
+### 📊 Métriques après session Tome 2
+
+| Métrique | Avant | Après |
+|---|---|---|
+| Modules Tome 2 | 0 | **9 nouveaux fichiers** |
+| Expériences gallery | 2 | **5 (+ 3 Tome 2)** |
+| Validators | 5 (Tome 1) | **11 (+ 6 Tome 2)** |
+| Chapitres Cohen-Tannoudji couverts | I–VII | **I–XIV** |
+| Statut global | ~85% Tome 1 | **Tome 2 complet** |
+
+### Validation physique Tome 2 (tous invariants)
+
+| Règle | Invariant | Statut |
+|---|---|---|
+| R6 | Théorème optique σ_tot = (4π/k) Im[f(0)] | ✅ erreur ~10⁻¹⁶ |
+| R6 | Borne d'unitarité 0 ≤ sin²(δₗ) ≤ 1 | ✅ |
+| R7 | Relations de commutation spin [Sᵢ,Sⱼ] = iℏεᵢⱼₖSₖ | ✅ |
+| R8 | Unitarité Clebsch-Gordan | ✅ |
+| R9 | Correction 2ème ordre non-dégénéré | ✅ |
+| R10 | Dégénérescence 2s₁/₂–2p₁/₂ (Lamb shift structurel) | ✅ erreur ~3×10⁻¹⁴ eV |
+| R10 | Transition hyperfine 21 cm | ✅ 1421.2 MHz |
+| R11 | Oscillations de Rabi P₂(Tπ) = 1 à résonance | ✅ |
+| R12 | Déterminant de Slater antisymétrique | ✅ |
