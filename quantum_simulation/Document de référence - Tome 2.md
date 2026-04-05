@@ -5,6 +5,15 @@
 
 **Convention de source** : `[file:1, Chap. N, § X-Y]` réfère au PDF fourni (*Mécanique quantique — Tome II*).
 
+**Notebooks pédagogiques** (tous ✓ fin-à-fin) :
+
+| Notebook | Chapitres | Modules Python |
+| --- | --- | --- |
+| [NB05 — Spin et moment cinétique](examples/notebooks/05_spin_et_moment_cinetique.ipynb) | IX, X | `core/spin.py`, `core/angular_momentum.py` |
+| [NB06 — Perturbations et Rabi](examples/notebooks/06_perturbations_et_rabi.ipynb) | XI, XIII | `dynamics/perturbation.py`, `dynamics/time_perturbation.py` |
+| [NB07 — Hydrogène structure fine](examples/notebooks/07_hydrogene_structure_fine.ipynb) | XII | `systems/hydrogen_structure.py`, `systems/zeeman_stark.py` |
+| [NB08 — Diffusion et particules identiques](examples/notebooks/08_diffusion_et_particules_identiques.ipynb) | VIII, XIV | `dynamics/scattering.py`, `systems/identical_particles.py` |
+
 ---
 
 ## 1. Cadre théorique issu du cours

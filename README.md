@@ -5,7 +5,7 @@ A rigorous Python framework for simulating quantum mechanical systems, grounded 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-89%20passed%20%7C%200%20failed-brightgreen.svg)](quantum_simulation/tests/)
-[![Notebooks](https://img.shields.io/badge/notebooks-4%2F4%20passing-brightgreen.svg)](quantum_simulation/examples/notebooks/)
+[![Notebooks](https://img.shields.io/badge/notebooks-8%2F8%20passing-brightgreen.svg)](quantum_simulation/examples/notebooks/)
 
 ---
 
@@ -18,7 +18,7 @@ The framework implements quantum mechanics from the ground up with full traceabi
 - **Measurement postulates**: Born rule with chi-squared validation, wavefunction collapse
 - **Physical validators**: Heisenberg dX·dP ≥ ℏ/2, Ehrenfest theorem, probability current ∂ρ/∂t + ∇·J = 0
 - **GPU acceleration**: CuPy-based sparse solvers, auto-detected
-- **4 pedagogical Jupyter notebooks**: free particle, measurement postulates, harmonic oscillator, double slit 2D
+- **8 pedagogical Jupyter notebooks**: Tome 1 (free particle, measurement, harmonic oscillator, double slit 2D) + Tome 2 (spin/angular momentum, perturbation theory/Rabi, hydrogen fine structure, scattering/identical particles)
 
 The theoretical foundation is the three-volume *Mecanique Quantique* (Cohen-Tannoudji, Diu & Laloë), referenced throughout as rules R2.2-R6.3. PDFs are in [`references/`](references/).
 
@@ -26,7 +26,7 @@ The theoretical foundation is the three-volume *Mecanique Quantique* (Cohen-Tann
 
 ## Repository Structure
 
-```
+```text
 .
 ├── quantum_simulation/          # Core framework package
 │   ├── core/                    # Fundamental objects (state, operators, constants)
@@ -55,7 +55,9 @@ The theoretical foundation is the three-volume *Mecanique Quantique* (Cohen-Tann
 
 ## Pedagogical Notebooks
 
-Four notebooks grounded in Cohen-Tannoudji, all passing end-to-end execution:
+Eight notebooks grounded in Cohen-Tannoudji, all passing end-to-end execution with ✓ validators.
+
+### Tome 1 — Quantum Mechanics Fundamentals
 
 | Notebook | Content | Key rules |
 | --- | --- | --- |
@@ -63,6 +65,15 @@ Four notebooks grounded in Cohen-Tannoudji, all passing end-to-end execution:
 | [02 — Postulats de la mesure](quantum_simulation/examples/notebooks/02_postulats_mesure.ipynb) | Born rule, 1000 simulated measurements, chi-squared, collapse | R2.2, R2.3 |
 | [03 — Oscillateur harmonique](quantum_simulation/examples/notebooks/03_oscillateur_harmonique.ipynb) | Spectrum, ψₙ(x) via Hermite, algebra a/a†, coherent states | R6.1-R6.3 |
 | [04 — Double fente 2D](quantum_simulation/examples/notebooks/04_double_fente_2d.ipynb) | ADI/split-operator 2D, Young fringes, norm conservation | R3.1, R5.1 |
+
+### Tome 2 — Advanced Quantum Mechanics
+
+| Notebook | Content | Key rules |
+| --- | --- | --- |
+| [05 — Spin et moment cinétique](quantum_simulation/examples/notebooks/05_spin_et_moment_cinetique.ipynb) | Spin-1/2 algebra, Bloch sphere, Clebsch-Gordan coefficients, coupled basis | R7.1, R8.1-R8.3 |
+| [06 — Perturbations et Rabi](quantum_simulation/examples/notebooks/06_perturbations_et_rabi.ipynb) | Stationary perturbations (1st/2nd order), variational method, Rabi oscillations, Fermi's golden rule | R9.1-R9.5, R11.2, R11.3 |
+| [07 — Hydrogène structure fine](quantum_simulation/examples/notebooks/07_hydrogene_structure_fine.ipynb) | Relativistic corrections, Darwin term, spin-orbit coupling, Zeeman effect, Stark effect, 21 cm hyperfine line | R10.1-R10.4 |
+| [08 — Diffusion et particules identiques](quantum_simulation/examples/notebooks/08_diffusion_et_particules_identiques.ipynb) | Born approximation, phase shifts, partial wave expansion, optical theorem, symmetrization, Slater determinants, exchange scattering | R6.1-R6.4, R12.1-R12.3 |
 
 ```bash
 jupyter notebook quantum_simulation/examples/notebooks/
@@ -328,6 +339,94 @@ All experiments automatically verify:
 ![Screen Distribution](quantum_simulation/results/double_slit/screen_distribution.png)
 
 *Intensity distribution at the detection screen. Fringe spacing Δy = λD/d consistent with Young's formula.*
+
+---
+
+### Notebook 05 — Spin-1/2 et Couplage de Moment Cinétique
+
+#### Sphère de Bloch
+
+![Bloch Sphere](quantum_simulation/results/05_bloch_sphere.png)
+
+*Représentation de Bloch d'un état spin-1/2 arbitraire |χ⟩ = cos(θ/2)|+⟩ + e^(iφ)sin(θ/2)|−⟩. Vecteur de Bloch |n| = 1 (état pur). Règle R7.1.*
+
+---
+
+### Notebook 06 — Perturbations et Oscillations de Rabi
+
+#### Niveaux perturbés de l'oscillateur harmonique
+
+![Perturbation Levels](quantum_simulation/results/06_perturbation_levels.png)
+
+*Corrections E⁽¹⁾ et E⁽²⁾ pour l'OHQ perturbé par W = λx². Comparaison perturbatif/exact et méthode variationnelle (borne supérieure). Règles R9.1-R9.4.*
+
+#### Méthode variationnelle
+
+![Variational](quantum_simulation/results/06_variational.png)
+
+*Minimisation de ⟨H⟩ sur les états gaussiens d'écart-type σ. L'énergie variationnelle est strictement supérieure à E₀ (borne variationnelle, Règle R9.5).*
+
+#### Oscillations de Rabi
+
+![Rabi Oscillations](quantum_simulation/results/06_rabi_oscillations.png)
+
+*P₂(t) pour un système à deux niveaux à résonance (δ=0) et hors résonance (δ=2Ω_R). Inversion complète P₂(T_π)=1 à résonance. Règle R11.3.*
+
+#### Précession sur la sphère de Bloch
+
+![Bloch Rabi](quantum_simulation/results/06_bloch_rabi.png)
+
+*Trajectoire du vecteur de Bloch pendant l'oscillation de Rabi. Précession autour de l'axe x à résonance — inversion complète en T_π.*
+
+---
+
+### Notebook 07 — Structure Fine et Hyperfine de l'Hydrogène
+
+#### Diagramme de structure fine (n=2)
+
+![Fine Structure](quantum_simulation/results/07_fine_structure.png)
+
+*Niveaux 2s₁/₂, 2p₁/₂, 2p₃/₂ avec corrections relativiste, Darwin et spin-orbite. Facteurs de Landé g_J = 2/3 (2p₁/₂) et 4/3 (2p₃/₂) exacts. Règle R10.1.*
+
+#### Effet Zeeman
+
+![Zeeman](quantum_simulation/results/07_zeeman.png)
+
+*Levée de dégénérescence des niveaux 2p en champ magnétique externe. Splitting linéaire en B proportionnel à g_J m_J μ_B. Règle R10.3.*
+
+#### Effet Stark linéaire (n=2)
+
+![Stark](quantum_simulation/results/07_stark.png)
+
+*Splitting Stark des quatre sous-niveaux n=2 en champ électrique. Splitting linéaire ΔE = 3eεa₀ vérifié à < 0.01 % (Règle R10.4). Raie 21 cm à ν = 1420.4 MHz ± 0.1 % (NIST).*
+
+---
+
+### Notebook 08 — Diffusion et Particules Identiques
+
+#### Déphasages partiels et sections efficaces (Born)
+
+![Phase Shifts](quantum_simulation/results/08_phase_shifts.png)
+
+*Déphasages δ_l et sections efficaces partielles σ_l pour un potentiel de Yukawa. Optique theorem vérifié à < 1 %. Règle R6.4.*
+
+#### Section efficace différentielle — approximation de Born
+
+![Born Cross Section](quantum_simulation/results/08_born_cross_section.png)
+
+*dσ/dΩ(θ) numérique vs analytique pour le potentiel de Yukawa. Accord exact. Régime Born validé : V₀/(ℏ²k²/2m) ≪ 1. Règles R6.1-R6.3.*
+
+#### Densité à deux particules — bosons vs fermions
+
+![Identical Particles](quantum_simulation/results/08_identical_particles.png)
+
+*|Ψ(x₁,x₂)|² pour bosons (symétrique), fermions (antisymétrique) et classique. Effet d'échange : bosons antibunching→ bunching, fermions exclusion de Pauli visible. Règle R12.1.*
+
+#### Diffusion de particules identiques
+
+![Identical Scattering](quantum_simulation/results/08_identical_scattering.png)
+
+*Section efficace de diffusion pour bosons et fermions comparée à des particules distinguables. Bosons : σ(π/2) = 2σ_classique, fermions : σ(π/2) = 0 (Règle R12.3).*
 
 ---
 

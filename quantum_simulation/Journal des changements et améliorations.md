@@ -6,6 +6,81 @@
 
 ---
 
+## 1. Session Tome 2 — 2026-04-05 — Notebooks NB05–NB08 et corrections de bugs
+
+### 1.1 Contexte
+
+Implémentation de 4 nouveaux notebooks pédagogiques couvrant les Chapitres IX–XIV du Tome 2 de Cohen-Tannoudji. Objectif double : illustrer les simulations Tome 2 et trouver les bugs en exécutant les notebooks de bout en bout.
+
+### 1.2 Résultats
+
+| Notebook | Validations | Statut |
+|---|---|---|
+| NB05 — Spin et moment cinétique | 9/9 ✓ | Passant |
+| NB06 — Perturbations et Rabi | 6/6 ✓ | Passant |
+| NB07 — Hydrogène structure fine | 7/7 ✓ | Passant |
+| NB08 — Diffusion et particules identiques | 6/6 ✓ | Passant |
+
+12 figures générées dans `results/` : sphère de Bloch, niveaux perturbés, méthode variationnelle, oscillations de Rabi, précession de Bloch, structure fine H, Zeeman, Stark, déphasages, section efficace Born, densité deux particules, diffusion identiques.
+
+### 1.3 Bugs découverts et corrigés
+
+#### Bug A — `angular_momentum.py` : fallback `_build_table` produit 0 pour l'état singulet
+
+**Fichier** : `core/angular_momentum.py:109-168`  
+**Symptôme** : `ClebschGordan.coefficient(0.5, 0.5, 0.5, -0.5, 0, 0)` retourne 0.0 au lieu de 1/√2 quand sympy est absent  
+**Cause** : La boucle itérait J de la valeur minimale vers la maximale. Pour J < J_max, la construction de |J,J⟩ par Gram-Schmidt nécessite les états |J',J'⟩ (J' > J) déjà calculés. La boucle croissante garantissait que ces états n'existaient pas encore. De plus, `_get_initial_coeff` se contentait de lire la table vide (retournant 0), rendant `norm_sq = 0` et sautant silencieusement l'état.  
+**Correction** : Boucle inversée (J_max → J_min) + remplacement de `_get_initial_coeff` par une orthogonalisation de Gram-Schmidt complète avec convention Condon-Shortley (signe + pour le m₁ maximal).
+
+#### Bug B — `generate_tome2_notebooks.py` : étiquettes de la table CG inversées
+
+**Fichier** : `examples/notebooks/generate_tome2_notebooks.py:266-268`  
+**Symptôme** : La table affichée montrait `|0,0⟩ : [0. 0. 0. 1.]` (qui est |1,-1⟩)  
+**Cause** : `labels_jm = ['|1,+1⟩', '|1, 0⟩', '|0, 0⟩', '|1,-1⟩']` alors que `two_spins_half_table()` stocke les lignes dans l'ordre `(1,+1), (1,0), (1,-1), (0,0)`.  
+**Correction** : `labels_jm = ['|1,+1⟩', '|1, 0⟩', '|1,-1⟩', '|0, 0⟩']`.
+
+#### Bug C — `tome2_invariants.py` : `known_two_spin_half()` retourne toutes les entrées comme erreurs
+
+**Fichier** : `validation/tome2_invariants.py:205-214`  
+**Symptôme** : Le notebook affichait toujours les 6 coefficients dans la liste des erreurs, même quand tout passait  
+**Cause** : `errors` était un dict `{(m1,m2,J,M): valeur_absolue_erreur}` avec toutes les entrées, pas seulement les échecs. `if res_kno.get('errors'):` était toujours vrai (dict non vide).  
+**Correction** : `errors` contient désormais uniquement les tuples pour lesquels `erreur ≥ tolérance`.
+
+#### Bug D — 13 séquences d'échappement invalides dans les notebooks générés
+
+**Fichier** : `examples/notebooks/generate_tome2_notebooks.py` (lignes 648, 650, 653, 658, 660, 663, 1023, 1030, 1031, 1252, 1253, 1321, 1329)  
+**Symptôme** : `SyntaxWarning: invalid escape sequence '\d'` (et `\p`, `\O`, `\P`, `\m`, `\D`) à l'exécution des notebooks sous Python 3.12+  
+**Cause** : Dans les cellules de code générées, les labels matplotlib contenaient des commandes LaTeX avec un seul antislash (`\delta`, `\pi`, `\Omega`, etc.) qui sont des séquences d'échappement invalides en Python.  
+**Correction** : Chaînes non-f-string converties en `r'...'` (raw strings) ; f-strings corrigées par double antislash (`\\delta` → `\\\\delta` dans le générateur → `\\delta` dans la cellule → `\delta` à l'exécution).
+
+#### Bug E — `scattering.py` : `BornApproximation.optical_theorem_check()` sans clé `is_valid`
+
+**Fichier** : `dynamics/scattering.py`  
+**Symptôme** : `KeyError: 'is_valid'` dans NB08  
+**Cause** : L'approximation de Born donne une amplitude purement réelle (Im[f_Born] = 0), donc le théorème optique est toujours violé. La méthode ne retourne pas de clé `is_valid` contrairement à `CrossSection.optical_theorem_check()`.  
+**Correction** : Accès à `is_valid` supprimé dans NB08 ; commentaire explicatif ajouté.
+
+#### Bug F — `identical_particles.py` : `verify_symmetry()` attend `'bose'`/`'fermi'` et non `'symmetric'`/`'antisymmetric'`
+
+**Fichier** : `systems/identical_particles.py:100`  
+**Symptôme** : Toutes les validations de symétrie échouaient  
+**Cause** : Le notebook passait `'symmetric'`/`'antisymmetric'` mais le code compare `expected_symmetry == 'bose'`.  
+**Correction** : Arguments corrigés en `'bose'` et `'fermi'` dans NB08.
+
+#### Bug G — `SlaterDeterminant` : norme < tolérance avec orbitales trop proches
+
+**Symptôme** : `norm ≈ 0.9997 < 1 - tol` — test de normalisation échoué  
+**Cause** : Overlap non nul entre les orbitales gaussiennes (overlap = 0.018) dégradait la norme du déterminant de Slater.  
+**Correction** : Séparation augmentée (`x0 = 5e-9` → `3e-9`) et largeur réduite (`sig = 1.2e-9` → `1.5e-9`).
+
+#### Bug H — Fermi's golden rule : Γ·t ≫ 1 (hors régime linéaire)
+
+**Symptôme** : `Γ·t_max = 253` — le système n'était pas dans le régime de validité de la règle d'or  
+**Cause** : `W_fi = 1e-20 J` donnait `Γ = 2.53×10¹⁴ s⁻¹`, trop grand pour vérifier Γt ≪ 1.  
+**Correction** : `W_fi = 1e-22 J` → `Γ·t_max = 0.025 ≪ 1` ✓.
+
+---
+
 ## 0. Session de corrections 2026-03-30 — Audit complet tests & notebooks
 
 ### 0.1 Contexte
