@@ -202,16 +202,18 @@ class ClebschGordanValidator:
             (0.5, -0.5, 0.0, 0.0): s2,
             (-0.5, 0.5, 0.0, 0.0): -s2,
         }
-        errors = {}
+        all_errors = {}
         for (m1, m2, J, M), expected in reference.items():
             computed = ClebschGordan.coefficient(0.5, m1, 0.5, m2, J, M)
-            errors[(m1, m2, J, M)] = abs(computed - expected)
+            all_errors[(m1, m2, J, M)] = abs(computed - expected)
 
-        max_error = max(errors.values())
+        max_error = max(all_errors.values())
+        # N'inclure dans 'errors' que les entrées qui échouent (pour l'affichage)
+        failing = [(k, v) for k, v in all_errors.items() if v >= tolerance]
         return {
             'all_correct': max_error < tolerance,
             'max_error': max_error,
-            'errors': errors,
+            'errors': [k for k, v in failing],
         }
 
 

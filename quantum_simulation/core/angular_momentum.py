@@ -102,44 +102,57 @@ class ClebschGordan:
         j1_2 = int(round(2 * j1))
         j2_2 = int(round(2 * j2))
 
-        # Itération sur chaque valeur totale J
+        # Itération sur chaque valeur totale J — de J_max vers J_min
+        # (les J plus grands doivent être calculés avant pour la Gram-Schmidt)
         J_min_2 = abs(j1_2 - j2_2)
         J_max_2 = j1_2 + j2_2
 
-        for J_2 in range(J_min_2, J_max_2 + 2, 2):
+        for J_2 in range(J_max_2, J_min_2 - 2, -2):
             J_val = J_2 / 2
-            # État maximal : M = J, normalisé
-            # |J,J⟩ = α |j1,j1;j2,J-j1⟩ + ... (convention Condon-Shortley : coeff>0 pour m1 max)
-            # Cas simple : utiliser descente à partir de l'état maximal
-            # État |J,J⟩ : seul terme m1+m2=J contribue
-            # Initialisation : |J_max, J_max⟩ = |j1,j1;j2,j2⟩ pour J_max = j1+j2
+            # Initialisation de |J,J⟩
             if J_2 == J_max_2:
-                # Un seul terme possible : m1=j1, m2=j2
+                # Cas maximal : un seul terme possible m1=j1, m2=j2
                 _set(j1_2, j2_2, J_2, J_2, 1.0)
             else:
-                # Construction de |J,J⟩ par orthogonalité avec |J+2,J⟩ (J+1 en unités entières)
-                # Utilisation de la relation d'orthogonalité
+                # Construction de |J,J⟩ par Gram-Schmidt dans le sous-espace M=J.
+                # Les états |J',J⟩ pour J' > J ont déjà été calculés (et descendus).
                 M_2 = J_2
-                norm_sq = 0.0
-                coeffs = {}
-                for m1_2 in range(-j1_2, j1_2 + 2, 2):
-                    m2_2 = M_2 - m1_2
-                    if abs(m2_2) > j2_2:
-                        continue
-                    # Coefficient par descente depuis J_2+2
-                    # Utiliser les coefficients déjà calculés pour J_2+2
-                    # CG pour |J+2, J⟩ → rotation par opérateur J−
-                    # Relation : ⟨m1,m2|J,M-1⟩ = ... (Racah)
-                    # Fallback: construction directe par récurrence sur M ↓
-                    coeffs[(m1_2, m2_2)] = _get_initial_coeff(j1_2, j2_2, J_2, M_2,
-                                                               m1_2, m2_2, table)
-                # Normalisation
-                norm_sq = sum(v ** 2 for v in coeffs.values())
-                if norm_sq < 1e-30:
+
+                # États de base du sous-espace m1+m2=M_2/2
+                basis = [(m1_2, M_2 - m1_2)
+                         for m1_2 in range(-j1_2, j1_2 + 2, 2)
+                         if abs(M_2 - m1_2) <= j2_2]
+                n = len(basis)
+                if n == 0:
                     continue
-                norm = np.sqrt(norm_sq)
-                for (m1_2, m2_2), v in coeffs.items():
-                    _set(m1_2, m2_2, J_2, J_2, v / norm)
+
+                # Trouver un vecteur initial non nul dans le sous-espace
+                # (essayer chaque vecteur standard jusqu'à ce que Gram-Schmidt converge)
+                vec = None
+                for start_idx in range(n):
+                    v = np.zeros(n)
+                    v[start_idx] = 1.0
+                    # Orthogonaliser contre tous les |J',M_2⟩ avec J' > J
+                    for J2p in range(J_2 + 2, J_max_2 + 2, 2):
+                        higher = np.array([_cg(m1_2, m2_2, J2p, M_2)
+                                           for (m1_2, m2_2) in basis])
+                        proj = np.dot(v, higher)
+                        v -= proj * higher
+                    norm = np.linalg.norm(v)
+                    if norm > 1e-12:
+                        v /= norm
+                        vec = v
+                        break
+
+                if vec is None:
+                    continue
+
+                # Convention Condon-Shortley : signe + pour le m1 maximal
+                if vec[-1] < 0:
+                    vec = -vec
+
+                for i, (m1_2, m2_2) in enumerate(basis):
+                    _set(m1_2, m2_2, J_2, J_2, vec[i])
 
             # Descente par opérateur J− : M de J à -J
             for M_2 in range(J_2 - 2, -J_2 - 2, -2):
