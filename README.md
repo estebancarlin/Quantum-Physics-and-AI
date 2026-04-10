@@ -5,7 +5,8 @@ A rigorous Python framework for simulating quantum mechanical systems, grounded 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-89%20passed%20%7C%200%20failed-brightgreen.svg)](quantum_simulation/tests/)
-[![Notebooks](https://img.shields.io/badge/notebooks-8%2F8%20passing-brightgreen.svg)](quantum_simulation/examples/notebooks/)
+[![Notebooks](https://img.shields.io/badge/notebooks-9%2F9%20passing-brightgreen.svg)](quantum_simulation/examples/notebooks/)
+[![PINNs](https://img.shields.io/badge/PINNs-TISE%20%2B%20TDSE-orange.svg)](quantum_simulation/pinn/)
 
 ---
 
@@ -18,7 +19,8 @@ The framework implements quantum mechanics from the ground up with full traceabi
 - **Measurement postulates**: Born rule with chi-squared validation, wavefunction collapse
 - **Physical validators**: Heisenberg dX·dP ≥ ℏ/2, Ehrenfest theorem, probability current ∂ρ/∂t + ∇·J = 0
 - **GPU acceleration**: CuPy-based sparse solvers, auto-detected
-- **8 pedagogical Jupyter notebooks**: Tome 1 (free particle, measurement, harmonic oscillator, double slit 2D) + Tome 2 (spin/angular momentum, perturbation theory/Rabi, hydrogen fine structure, scattering/identical particles)
+- **Physics-Informed Neural Networks (PINNs)**: `quantum_simulation/pinn/` — `TISESolver` (eigenvalues via PINN) + `TDSESolver` (time-dependent dynamics, real/imaginary split)
+- **9 pedagogical Jupyter notebooks**: Tome 1 (NB01–04) + Tome 2 (NB05–08) + Tome IA (NB09 PINNs)
 
 The theoretical foundation is the three-volume *Mecanique Quantique* (Cohen-Tannoudji, Diu & Laloë), referenced throughout as rules R2.2-R6.3. PDFs are in [`references/`](references/).
 
@@ -37,6 +39,12 @@ The theoretical foundation is the three-volume *Mecanique Quantique* (Cohen-Tann
 │   ├── visualization/           # 2D/3D plots, dashboards, animations
 │   ├── orchestration/           # Batch pipelines, comparisons, reports
 │   ├── utils/                   # Numerical tools (FFT, gradients), GPU manager, config loader
+│   ├── pinn/                    # Physics-Informed Neural Networks (TISE + TDSE)
+│   │   ├── network.py           # SchrodingerNet, TISENet, TDSENet, FourierFeatureTISENet
+│   │   ├── losses.py            # tise_total_loss, tdse_total_loss
+│   │   ├── tise_solver.py       # TISESolver (Adam + L-BFGS, trial functions, multi-state)
+│   │   ├── tdse_solver.py       # TDSESolver (real/imag split, espace-temps complet)
+│   │   └── utils.py             # Gauss-Legendre quadrature, collocation, métriques
 │   ├── tests/                   # pytest suite (89 tests, 0 failures)
 │   ├── examples/
 │   │   ├── notebooks/           # Pedagogical Jupyter notebooks (grounded in Cohen-Tannoudji)
@@ -74,6 +82,12 @@ Eight notebooks grounded in Cohen-Tannoudji, all passing end-to-end execution wi
 | [06 — Perturbations et Rabi](quantum_simulation/examples/notebooks/06_perturbations_et_rabi.ipynb) | Stationary perturbations (1st/2nd order), variational method, Rabi oscillations, Fermi's golden rule | R9.1-R9.5, R11.2, R11.3 |
 | [07 — Hydrogène structure fine](quantum_simulation/examples/notebooks/07_hydrogene_structure_fine.ipynb) | Relativistic corrections, Darwin term, spin-orbit coupling, Zeeman effect, Stark effect, 21 cm hyperfine line | R10.1-R10.4 |
 | [08 — Diffusion et particules identiques](quantum_simulation/examples/notebooks/08_diffusion_et_particules_identiques.ipynb) | Born approximation, phase shifts, partial wave expansion, optical theorem, symmetrization, Slater determinants, exchange scattering | R6.1-R6.4, R12.1-R12.3 |
+
+### Tome IA — AI/ML Extensions
+
+| Notebook | Content | Module |
+| --- | --- | --- |
+| [09 — PINNs pour l'équation de Schrödinger](quantum_simulation/examples/notebooks/09_pinn_schrodinger.ipynb) | TISE (HO, puits infini, anharmonique) + TDSE (paquet d'ondes, tunnel quantique) — PINN vs Crank-Nicolson | `quantum_simulation/pinn/` |
 
 ```bash
 jupyter notebook quantum_simulation/examples/notebooks/
@@ -466,10 +480,24 @@ pytest quantum_simulation/tests/ -v
 
 | Direction | Method | Status |
 | --- | --- | --- |
-| **Neural Quantum States** | NQS (NetKet / JAX) — variational ground states for N-body | Planned |
-| **Physics-Informed Neural Networks** | PINNs for TDSE — NN solving Schrödinger equation | Planned |
+| **Physics-Informed Neural Networks** | PINNs for TISE + TDSE — TISESolver, TDSESolver, Adam + L-BFGS | **Implemented** (NB09) |
+| **Neural Quantum States** | NQS (NetKet / JAX) — variational ground states for N-body | Planned (NB10) |
 | **Variational Quantum Eigensolver** | VQE in JAX — quantum-classical hybrid optimizer | Planned |
 | **3D systems** | FFT-based 3D evolution, hydrogen atom, isosurfaces | Planned |
+
+### Quick start — PINNs
+
+```python
+from quantum_simulation.pinn import TISESolver
+import torch
+
+def harmonic_potential(x):
+    return 0.5 * x**2
+
+solver = TISESolver(potential_fn=harmonic_potential, x_domain=(-6.0, 6.0))
+result = solver.solve(n_epochs_adam=5000, n_steps_lbfgs=300, verbose=True)
+print(f"E₀ = {result['E']:.5f}  (exact : 0.50000)")
+```
 
 ---
 
